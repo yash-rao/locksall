@@ -1,7 +1,9 @@
 /* LocksAll landing page styling */
 
 .la-page {
+  position: relative;
   min-height: 100vh;
+  overflow: hidden;
   background: radial-gradient(circle at top, #111827, #020617);
   color: #f9fafb;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -405,3 +407,112 @@
   font-size: 0.85rem;
 }
 
+/* --- LocksAll abstract security background + layout glue --- */
+
+/* content above background */
+.la-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* full-page animated background */
+.la-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at top, #020617, #020617);
+}
+
+/* faint animated grid to suggest “network / control plane” */
+.la-bg-grid {
+  position: absolute;
+  inset: -80px;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.9) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.9) 1px, transparent 1px);
+  background-size: 70px 70px;
+  opacity: 0.45;
+  animation: la-grid-pan 40s linear infinite;
+}
+
+@keyframes la-grid-pan {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-140px, -70px, 0);
+  }
+}
+
+/* glowing “zones” */
+.la-bg-orb {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 999px;
+  filter: blur(80px);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+.orb-1 {
+  background: #22c55e;
+  top: -140px;
+  left: -80px;
+}
+
+.orb-2 {
+  background: #0ea5e9;
+  bottom: -160px;
+  right: 5%;
+}
+
+.orb-3 {
+  background: #a855f7;
+  top: 30%;
+  left: 65%;
+}
+
+/* nodes = abstract devices/locks */
+.la-bg-node {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.2),
+    0 0 22px rgba(34, 197, 94, 0.9);
+  opacity: 0.85;
+  transition: transform 0.35s ease-out, opacity 0.35s ease-out;
+}
+
+.node-1 {
+  top: 18%;
+  left: 20%;
+}
+
+.node-2 {
+  top: 32%;
+  left: 55%;
+}
+
+.node-3 {
+  top: 60%;
+  left: 30%;
+}
+
+.node-4 {
+  top: 72%;
+  left: 75%;
+}
+
+/* mobile: keep it subtle */
+@media (max-width: 768px) {
+  .la-bg-orb {
+    opacity: 0.3;
+    filter: blur(70px);
+  }
+}
