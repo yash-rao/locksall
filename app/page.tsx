@@ -1,101 +1,292 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+type SectionKey = "features" | "useCases" | "faq";
 
 export default function Home() {
-
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [activeUseCase, setActiveUseCase] =
+    useState<SectionKey>("features");
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const handleSubmit = (e: any) => {
+  const featuresRef = useRef<HTMLElement | null>(null);
+  const useCasesRef = useRef<HTMLElement | null>(null);
+  const faqRef = useRef<HTMLElement | null>(null);
+
+  const handleScrollTo = (ref: React.RefObject<HTMLElement | null>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Here you can later POST to an API / DB
     setSubmitted(true);
   };
 
+  const faqItems = [
+    {
+      q: "What is LocksAll?",
+      a: "LocksAll is a unified security platform concept that connects digital identity with physical and digital access — think of it as a smart layer between people, devices, and locks."
+    },
+    {
+      q: "Is this a live product?",
+      a: "Right now, this is an early prototype and concept preview. The full feature set, integrations, and pricing are still under active design."
+    },
+    {
+      q: "Who is LocksAll for?",
+      a: "Tech-savvy individuals, startups, and organizations who care about secure access, audit trails, and centralized control for their devices and environments."
+    },
+    {
+      q: "How can I get early access?",
+      a: "Drop your email in the early-access form above. When a private beta or demo is ready, we’ll reach out."
+    }
+  ];
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 text-white">
-      
+    <main className="la-page">
       {/* NAVBAR */}
-      <header className="flex justify-between items-center px-8 py-6">
-        <h1 className="text-2xl font-bold tracking-wide">
-          Locks<span className="text-emerald-400">All</span>
-        </h1>
-        <nav className="space-x-6 text-sm">
-          <a className="hover:text-emerald-400 cursor-pointer">Home</a>
-          <a className="hover:text-emerald-400 cursor-pointer">Features</a>
-          <a className="hover:text-emerald-400 cursor-pointer">Contact</a>
+      <header className="la-nav">
+        <div className="la-logo">
+          Locks<span>All</span>
+        </div>
+        <nav className="la-nav-links">
+          <button onClick={() => handleScrollTo(featuresRef)}>Features</button>
+          <button onClick={() => handleScrollTo(useCasesRef)}>Use cases</button>
+          <button onClick={() => handleScrollTo(faqRef)}>FAQ</button>
         </nav>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="px-10 py-24 text-center">
-        <h2 className="text-5xl font-extrabold leading-tight">
-          Secure. Smart. <span className="text-emerald-400">Everywhere.</span>
-        </h2>
+      {/* HERO */}
+      <section className="la-hero">
+        <div className="la-hero-inner">
+          <h1>Secure access for a world of locks & identities.</h1>
+          <p>
+            LocksAll is your unified access layer — one place to manage who
+            can open what, when, and from where. Designed for the next
+            generation of smart homes, teams, and connected spaces.
+          </p>
 
-        <p className="mt-4 text-gray-300 max-w-2xl mx-auto">
-          LocksAll is the future of unified digital & physical security —
-          providing seamless identity-based access control across devices,
-          platforms, and environments.
+          {!submitted ? (
+            <form className="la-cta-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                required
+                placeholder="Your best email for early access"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button type="submit">Request Invite</button>
+            </form>
+          ) : (
+            <p className="la-cta-thanks">
+              🎉 Thanks! You’re on the early-access list.
+            </p>
+          )}
+
+          <div className="la-hero-meta">
+            <span>🔐 Identity-aware access</span>
+            <span>🌐 Built for distributed teams</span>
+            <span>⚡ Prototype preview</span>
+          </div>
+        </div>
+
+        <div className="la-hero-card">
+          <div className="la-hero-card-header">
+            <span className="dot red" />
+            <span className="dot yellow" />
+            <span className="dot green" />
+          </div>
+          <div className="la-hero-card-body">
+            <p className="la-hero-card-label">Live activity</p>
+            <div className="la-hero-events">
+              <div className="la-hero-event">
+                <span className="pill pill-green">Granted</span>
+                <div>
+                  <strong>Yash</strong> entered <b>Workspace Door</b>
+                  <div className="muted">2 minutes ago · via Mobile App</div>
+                </div>
+              </div>
+              <div className="la-hero-event">
+                <span className="pill pill-amber">Review</span>
+                <div>
+                  <strong>API key</strong> requested access to{" "}
+                  <b>Admin Console</b>
+                  <div className="muted">Needs approval</div>
+                </div>
+              </div>
+              <div className="la-hero-event">
+                <span className="pill pill-red">Blocked</span>
+                <div>
+                  <strong>Unknown device</strong> tried unlocking{" "}
+                  <b>Garage</b>
+                  <div className="muted">Location mismatch · Logged</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section ref={featuresRef} className="la-section">
+        <h2>Why LocksAll?</h2>
+        <p className="la-section-subtitle">
+          A single control plane for access, logs, and automation.
         </p>
 
-        {/* EMAIL FORM */}
-        {!submitted ? (
-          <form
-            onSubmit={handleSubmit}
-            className="mt-8 flex justify-center gap-2"
+        <div className="la-features-grid">
+          <div className="la-feature-card">
+            <h3>Centralized access graph</h3>
+            <p>
+              Model people, devices, doors, and data as nodes in a single graph.
+              See who can access what in seconds, not hours.
+            </p>
+          </div>
+          <div className="la-feature-card">
+            <h3>Context-aware policies</h3>
+            <p>
+              Define rules based on role, device trust, time of day, or
+              geolocation. Auto-lock, auto-expire, auto-audit.
+            </p>
+          </div>
+          <div className="la-feature-card">
+            <h3>Audit-ready history</h3>
+            <p>
+              Every access event is logged, signed, and ready for compliance
+              reviews or incident investigations.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* USE CASES (TABS) */}
+      <section ref={useCasesRef} className="la-section">
+        <h2>Made for real-world scenarios</h2>
+
+        <div className="la-tabs">
+          <button
+            className={
+              activeUseCase === "features" ? "la-tab active" : "la-tab"
+            }
+            onClick={() => setActiveUseCase("features")}
           >
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email to join early access"
-              className="px-4 py-3 rounded-lg w-72 text-black"
-            />
-            <button
-              type="submit"
-              className="bg-emerald-500 hover:bg-emerald-600 px-6 py-3 rounded-lg font-semibold"
+            Startup office
+          </button>
+          <button
+            className={
+              activeUseCase === "useCases" ? "la-tab active" : "la-tab"
+            }
+            onClick={() => setActiveUseCase("useCases")}
+          >
+            Remote teams
+          </button>
+          <button
+            className={
+              activeUseCase === "faq" ? "la-tab active" : "la-tab"
+            }
+            onClick={() => setActiveUseCase("faq")}
+          >
+            Smart home
+          </button>
+        </div>
+
+        <div className="la-tab-panel">
+          {activeUseCase === "features" && (
+            <>
+              <h3>Startup office — zero-friction access</h3>
+              <ul>
+                <li>Issue digital keys to new hires in seconds.</li>
+                <li>Instantly revoke access when someone leaves.</li>
+                <li>Temporary guest passes for visitors & contractors.</li>
+              </ul>
+            </>
+          )}
+          {activeUseCase === "useCases" && (
+            <>
+              <h3>Remote teams — security that travels</h3>
+              <ul>
+                <li>Gate admin tools behind identity and device posture.</li>
+                <li>Enforce location-based policies for sensitive actions.</li>
+                <li>Keep a unified audit trail across apps and devices.</li>
+              </ul>
+            </>
+          )}
+          {activeUseCase === "faq" && (
+            <>
+              <h3>Smart home — unified control center</h3>
+              <ul>
+                <li>One place to manage locks, cameras, and alerts.</li>
+                <li>Family, guests, and cleaning crew with scoped access.</li>
+                <li>Automation rules to lock, notify, and monitor.</li>
+              </ul>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* FAQ ACCORDION */}
+      <section ref={faqRef} className="la-section la-faq-section">
+        <h2>Questions, meet answers.</h2>
+        <div className="la-faq-list">
+          {faqItems.map((item, index) => (
+            <div
+              key={index}
+              className={
+                openFaqIndex === index
+                  ? "la-faq-item open"
+                  : "la-faq-item"
+              }
             >
-              Notify Me
-            </button>
-          </form>
-        ) : (
-          <p className="mt-6 text-emerald-300 font-semibold">
-            🎉 Thanks! We’ll notify you when the prototype launches.
-          </p>
-        )}
+              <button
+                className="la-faq-question"
+                onClick={() =>
+                  setOpenFaqIndex(openFaqIndex === index ? null : index)
+                }
+              >
+                <span>{item.q}</span>
+                <span>{openFaqIndex === index ? "−" : "+"}</span>
+              </button>
+              {openFaqIndex === index && (
+                <p className="la-faq-answer">{item.a}</p>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
-      {/* FEATURE GRID */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 px-10 pb-20">
-
-        <div className="p-6 bg-gray-900 rounded-xl hover:scale-105 transition">
-          <h3 className="text-xl font-bold mb-2">Identity-Driven Security</h3>
-          <p className="text-gray-300">
-            Smart access policies powered by user identity, behavior patterns, and trust level.
+      {/* FOOTER / FINAL CTA */}
+      <footer className="la-footer">
+        <div>
+          <div className="la-logo">
+            Locks<span>All</span>
+          </div>
+          <p className="la-footer-text">
+            Prototype preview of a unified access platform. Built with Next.js.
           </p>
         </div>
-
-        <div className="p-6 bg-gray-900 rounded-xl hover:scale-105 transition">
-          <h3 className="text-xl font-bold mb-2">Unified Control</h3>
-          <p className="text-gray-300">
-            Manage devices, credentials, locks, and permissions from a single interface.
-          </p>
+        <div className="la-footer-right">
+          {!submitted ? (
+            <>
+              <p className="la-footer-text">
+                Be the first to know when we launch something real.
+              </p>
+              <button
+                className="la-footer-button"
+                onClick={() => handleScrollTo(featuresRef)}
+              >
+                Explore the vision
+              </button>
+            </>
+          ) : (
+            <p className="la-footer-text">
+              Thanks for being part of the earliest supporters.
+            </p>
+          )}
         </div>
-
-        <div className="p-6 bg-gray-900 rounded-xl hover:scale-105 transition">
-          <h3 className="text-xl font-bold mb-2">Built for Scalability</h3>
-          <p className="text-gray-300">
-            Designed to evolve into enterprise-grade access automation & IoT integration.
-          </p>
-        </div>
-
-      </section>
-
-      {/* FOOTER */}
-      <footer className="text-center pb-6 text-gray-400 text-sm">
-        © {new Date().getFullYear()} LocksAll — Prototype Preview
       </footer>
     </main>
   );
