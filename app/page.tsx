@@ -5,11 +5,15 @@ import { useRef, useState } from "react";
 type SectionKey = "features" | "useCases" | "faq";
 
 export default function Home() {
+  
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeUseCase, setActiveUseCase] =
-    useState<SectionKey>("features");
+  useState<SectionKey>("features");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
 
   const featuresRef = useRef<HTMLElement | null>(null);
   const useCasesRef = useRef<HTMLElement | null>(null);
@@ -21,11 +25,35 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here you can later POST to an API / DB
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!email) return;
+
+  try {
+    setIsSubmitting(true);
+    setError(null);
+
+    const res = await fetch("/api/early-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.message || "Failed to subscribe");
+    }
+
     setSubmitted(true);
-  };
+    setEmail("");
+  } catch (err: any) {
+    console.error(err);
+    setError(err.message || "Something went wrong, please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const faqItems = [
     {
@@ -71,16 +99,21 @@ export default function Home() {
           </p>
 
           {!submitted ? (
-            <form className="la-cta-form" onSubmit={handleSubmit}>
-              <input
-                type="email"
-                required
-                placeholder="Your best email for early access"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button type="submit">Request Invite</button>
-            </form>
+            <>
+              <form className="la-cta-form" onSubmit={handleSubmit}>
+                <input
+                  type="email"
+                  required
+                  placeholder="Your best email for early access"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Request Invite"}
+                </button>
+              </form>
+              {error && <p className="la-cta-error">{error}</p>}
+            </>
           ) : (
             <p className="la-cta-thanks">
               🎉 Thanks! You’re on the early-access list.

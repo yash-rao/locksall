@@ -398,3 +398,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.la-cta-error {
+  margin-top: 0.6rem;
+  color: #fecaca;
+  font-size: 0.85rem;
+}
+
