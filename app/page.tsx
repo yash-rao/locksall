@@ -92,7 +92,10 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email) {
+      setError("Please enter an email address to continue.");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -174,18 +177,34 @@ export default function Home() {
             {!submitted ? (
               <>
                 <form className="la-cta-form" onSubmit={handleSubmit}>
+                  <label className="sr-only" htmlFor="early-access-email">
+                    Email address
+                  </label>
                   <input
+                    id="early-access-email"
                     type="email"
                     required
                     placeholder="Your best email for early access"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby="early-access-helper"
                   />
                   <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Sending..." : "Request Invite"}
                   </button>
                 </form>
-                {error && <p className="la-cta-error">{error}</p>}
+                <p
+                  id="early-access-helper"
+                  className="la-cta-helper"
+                >
+                  We’ll only use this to share launch updates. No spam.
+                </p>
+                {error && (
+                  <p className="la-cta-error" role="alert">
+                    {error}
+                  </p>
+                )}
               </>
             ) : (
               <p className="la-cta-thanks">
