@@ -9,48 +9,56 @@ type MouseVector = { x: number; y: number };
 
 /** Abstract animated security background (grid + glowing orbs + nodes) */
 function SecurityBackground({ mouse }: { mouse: MouseVector }) {
-  // small parallax offsets based on mouse position
-  const orb1Style = {
-    transform: `translate3d(${mouse.x * 40}px, ${mouse.y * 30}px, 0)`,
-  };
-  const orb2Style = {
-    transform: `translate3d(${mouse.x * -50}px, ${mouse.y * 25}px, 0)`,
-  };
-  const orb3Style = {
-    transform: `translate3d(${mouse.x * 30}px, ${mouse.y * -40}px, 0)`,
+  // positions are static; movement comes from a wrapper parallax transform
+  const layerStyle = {
+    transform: `translate3d(${mouse.x * 35}px, ${mouse.y * 25}px, 0)`,
   };
 
-  const node1Style = {
-    transform: `translate3d(${mouse.x * 25}px, ${mouse.y * -10}px, 0)`,
-  };
-  const node2Style = {
-    transform: `translate3d(${mouse.x * -20}px, ${mouse.y * 15}px, 0)`,
-  };
-  const node3Style = {
-    transform: `translate3d(${mouse.x * 18}px, ${mouse.y * 10}px, 0)`,
-  };
-  const node4Style = {
-    transform: `translate3d(${mouse.x * -22}px, ${mouse.y * -18}px, 0)`,
-  };
+  // Abstract node positions (percent-based)
+  const nodes = [
+    { top: "14%", left: "18%" },
+    { top: "22%", left: "42%" },
+    { top: "16%", left: "72%" },
+    { top: "33%", left: "60%" },
+    { top: "38%", left: "25%" },
+    { top: "48%", left: "45%" },
+    { top: "52%", left: "78%" },
+    { top: "62%", left: "18%" },
+    { top: "66%", left: "55%" },
+    { top: "74%", left: "35%" },
+    { top: "78%", left: "82%" },
+    { top: "86%", left: "58%" },
+  ];
 
   return (
     <div className="la-bg">
-      {/* subtle moving grid */}
       <div className="la-bg-grid" />
 
-      {/* glowing security “zones” */}
-      <div className="la-bg-orb orb-1" style={orb1Style} />
-      <div className="la-bg-orb orb-2" style={orb2Style} />
-      <div className="la-bg-orb orb-3" style={orb3Style} />
+      {/* Orbs are separate so they feel “deeper” */}
+      <div className="la-bg-orb orb-1" />
+      <div className="la-bg-orb orb-2" />
+      <div className="la-bg-orb orb-3" />
 
-      {/* abstract nodes that hint at devices / cards / locks */}
-      <div className="la-bg-node node-1" style={node1Style} />
-      <div className="la-bg-node node-2" style={node2Style} />
-      <div className="la-bg-node node-3" style={node3Style} />
-      <div className="la-bg-node node-4" style={node4Style} />
+      {/* Network layer: nodes + lines move slightly with cursor */}
+      <div className="la-bg-network" style={layerStyle}>
+        <div className="la-bg-lines line-a" />
+        <div className="la-bg-lines line-b" />
+        <div className="la-bg-lines line-c" />
+
+        {nodes.map((n, i) => (
+          <div
+            key={i}
+            className="la-bg-node2"
+            style={{ top: n.top, left: n.left }}
+          >
+            <span className="la-bg-pulse" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
 
 export default function Home() {
   const [email, setEmail] = useState("");
