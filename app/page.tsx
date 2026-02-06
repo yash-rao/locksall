@@ -3,7 +3,7 @@
 import type React from "react";
 import { useRef, useState } from "react";
 
-type SectionKey = "features" | "useCases" | "faq";
+import { siteConfig, type UseCaseKey } from "@/app/config";
 
 type MouseVector = { x: number; y: number };
 
@@ -66,7 +66,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeUseCase, setActiveUseCase] =
-    useState<SectionKey>("features");
+    useState<UseCaseKey>("features");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // mouse position (normalized -0.5 .. 0.5)
@@ -75,6 +75,18 @@ export default function Home() {
   const featuresRef = useRef<HTMLElement | null>(null);
   const useCasesRef = useRef<HTMLElement | null>(null);
   const faqRef = useRef<HTMLElement | null>(null);
+
+  const {
+    hero,
+    earlyAccess,
+    features,
+    useCases,
+    faq,
+    footer,
+    navigation,
+    heroCard,
+    sections,
+  } = siteConfig;
 
   const handleScrollTo = (ref: React.RefObject<HTMLElement | null>) => {
     if (ref.current) {
@@ -92,7 +104,10 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email) {
+      setError(earlyAccess.emptyEmailMessage);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -119,25 +134,6 @@ export default function Home() {
     }
   };
 
-  const faqItems = [
-    {
-      q: "What is LocksAll?",
-      a: "LocksAll is a unified security platform concept that connects digital identity with physical and digital access — think of it as a smart layer between people, devices, and locks.",
-    },
-    {
-      q: "Is this a live product?",
-      a: "Right now, this is an early prototype and concept preview. The full feature set, integrations, and pricing are still under active design.",
-    },
-    {
-      q: "Who is LocksAll for?",
-      a: "Tech-savvy individuals, startups, and organizations who care about secure access, audit trails, and centralized control for their devices and environments.",
-    },
-    {
-      q: "How can I get early access?",
-      a: "Drop your email in the early-access form above. When a private beta or demo is ready, we’ll reach out.",
-    },
-  ];
-
   return (
     <main className="la-page" onMouseMove={handleMouseMove}>
       {/* interactive animated background */}
@@ -148,55 +144,80 @@ export default function Home() {
         {/* NAVBAR */}
         <header className="la-nav">
           <div className="la-logo">
-            Locks<span>All</span>
+            {siteConfig.brand.primary}
+            <span>{siteConfig.brand.accent}</span>
           </div>
           <nav className="la-nav-links">
-            <button onClick={() => handleScrollTo(featuresRef)}>
-              Features
-            </button>
-            <button onClick={() => handleScrollTo(useCasesRef)}>
-              Use cases
-            </button>
-            <button onClick={() => handleScrollTo(faqRef)}>FAQ</button>
+            {navigation.map((item) => {
+              const targetRef =
+                item.section === "features"
+                  ? featuresRef
+                  : item.section === "useCases"
+                    ? useCasesRef
+                    : faqRef;
+
+              return (
+                <button
+                  key={item.section}
+                  onClick={() => handleScrollTo(targetRef)}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </nav>
         </header>
 
         {/* HERO */}
         <section className="la-hero">
           <div className="la-hero-inner">
-            <h1>Secure access for a world of locks & identities.</h1>
-            <p>
-              LocksAll is your unified access layer — one place to manage who
-              can open what, when, and from where. Designed for the next
-              generation of smart homes, teams, and connected spaces.
-            </p>
+            <h1>{hero.title}</h1>
+            <p>{hero.subtitle}</p>
 
             {!submitted ? (
               <>
                 <form className="la-cta-form" onSubmit={handleSubmit}>
+                  <label className="sr-only" htmlFor="early-access-email">
+                    Email address
+                  </label>
                   <input
+                    id="early-access-email"
                     type="email"
                     required
-                    placeholder="Your best email for early access"
+                    placeholder={earlyAccess.inputPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby="early-access-helper"
                   />
                   <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Sending..." : "Request Invite"}
+                    {isSubmitting
+                      ? earlyAccess.submittingLabel
+                      : earlyAccess.submitLabel}
                   </button>
                 </form>
-                {error && <p className="la-cta-error">{error}</p>}
+                <p
+                  id="early-access-helper"
+                  className="la-cta-helper"
+                >
+                  {earlyAccess.helperText}
+                </p>
+                {error && (
+                  <p className="la-cta-error" role="alert">
+                    {error}
+                  </p>
+                )}
               </>
             ) : (
               <p className="la-cta-thanks">
-                🎉 Thanks! You’re on the early-access list.
+                {earlyAccess.thankYouMessage}
               </p>
             )}
 
             <div className="la-hero-meta">
-              <span>🔐 Identity-aware access</span>
-              <span>🌐 Built for distributed teams</span>
-              <span>⚡ Prototype preview</span>
+              {hero.meta.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </div>
           </div>
 
@@ -207,35 +228,23 @@ export default function Home() {
               <span className="dot green" />
             </div>
             <div className="la-hero-card-body">
-              <p className="la-hero-card-label">Live activity</p>
+              <p className="la-hero-card-label">{heroCard.label}</p>
               <div className="la-hero-events">
-                <div className="la-hero-event">
-                  <span className="pill pill-green">Granted</span>
-                  <div>
-                    <strong>Yash</strong> entered <b>Workspace Door</b>
-                    <div className="muted">
-                      2 minutes ago · via Mobile App
+                {heroCard.events.map((event) => (
+                  <div
+                    key={`${event.status}-${event.title}-${event.emphasis}`}
+                    className="la-hero-event"
+                  >
+                    <span className={`pill pill-${event.tone}`}>
+                      {event.status}
+                    </span>
+                    <div>
+                      <strong>{event.title}</strong> {event.action}{" "}
+                      <b>{event.emphasis}</b>
+                      <div className="muted">{event.detail}</div>
                     </div>
                   </div>
-                </div>
-                <div className="la-hero-event">
-                  <span className="pill pill-amber">Review</span>
-                  <div>
-                    <strong>API key</strong> requested access to{" "}
-                    <b>Admin Console</b>
-                    <div className="muted">Needs approval</div>
-                  </div>
-                </div>
-                <div className="la-hero-event">
-                  <span className="pill pill-red">Blocked</span>
-                  <div>
-                    <strong>Unknown device</strong> tried unlocking{" "}
-                    <b>Garage</b>
-                    <div className="muted">
-                      Location mismatch · Logged
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -243,114 +252,60 @@ export default function Home() {
 
         {/* FEATURES */}
         <section ref={featuresRef} className="la-section">
-          <h2>Why LocksAll?</h2>
-          <p className="la-section-subtitle">
-            A single control plane for access, logs, and automation.
-          </p>
+          <h2>{sections.features.title}</h2>
+          <p className="la-section-subtitle">{sections.features.subtitle}</p>
 
           <div className="la-features-grid">
-            <div className="la-feature-card">
-              <h3>Centralized access graph</h3>
-              <p>
-                Model people, devices, doors, and data as nodes in a single
-                graph. See who can access what in seconds, not hours.
-              </p>
-            </div>
-            <div className="la-feature-card">
-              <h3>Context-aware policies</h3>
-              <p>
-                Define rules based on role, device trust, time of day, or
-                geolocation. Auto-lock, auto-expire, auto-audit.
-              </p>
-            </div>
-            <div className="la-feature-card">
-              <h3>Audit-ready history</h3>
-              <p>
-                Every access event is logged, signed, and ready for compliance
-                reviews or incident investigations.
-              </p>
-            </div>
+            {features.map((feature) => (
+              <div key={feature.title} className="la-feature-card">
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* USE CASES (TABS) */}
         <section ref={useCasesRef} className="la-section">
-          <h2>Made for real-world scenarios</h2>
+          <h2>{sections.useCases.title}</h2>
 
           <div className="la-tabs">
-            <button
-              className={
-                activeUseCase === "features" ? "la-tab active" : "la-tab"
-              }
-              onClick={() => setActiveUseCase("features")}
-            >
-              Startup office
-            </button>
-            <button
-              className={
-                activeUseCase === "useCases" ? "la-tab active" : "la-tab"
-              }
-              onClick={() => setActiveUseCase("useCases")}
-            >
-              Remote teams
-            </button>
-            <button
-              className={
-                activeUseCase === "faq" ? "la-tab active" : "la-tab"
-              }
-              onClick={() => setActiveUseCase("faq")}
-            >
-              Smart home
-            </button>
+            {useCases.map((useCase) => (
+              <button
+                key={useCase.key}
+                className={
+                  activeUseCase === useCase.key
+                    ? "la-tab active"
+                    : "la-tab"
+                }
+                onClick={() => setActiveUseCase(useCase.key)}
+              >
+                {useCase.label}
+              </button>
+            ))}
           </div>
 
           <div className="la-tab-panel">
-            {activeUseCase === "features" && (
-              <>
-                <h3>Startup office — zero-friction access</h3>
-                <ul>
-                  <li>Issue digital keys to new hires in seconds.</li>
-                  <li>Instantly revoke access when someone leaves.</li>
-                  <li>
-                    Temporary guest passes for visitors & contractors.
-                  </li>
-                </ul>
-              </>
-            )}
-            {activeUseCase === "useCases" && (
-              <>
-                <h3>Remote teams — security that travels</h3>
-                <ul>
-                  <li>Gate admin tools behind identity and device posture.</li>
-                  <li>
-                    Enforce location-based policies for sensitive actions.
-                  </li>
-                  <li>
-                    Keep a unified audit trail across apps and devices.
-                  </li>
-                </ul>
-              </>
-            )}
-            {activeUseCase === "faq" && (
-              <>
-                <h3>Smart home — unified control center</h3>
-                <ul>
-                  <li>One place to manage locks, cameras, and alerts.</li>
-                  <li>
-                    Family, guests, and cleaning crew with scoped access.
-                  </li>
-                  <li>Automation rules to lock, notify, and monitor.</li>
-                </ul>
-              </>
-            )}
+            {useCases
+              .filter((useCase) => useCase.key === activeUseCase)
+              .map((useCase) => (
+                <div key={useCase.key}>
+                  <h3>{useCase.title}</h3>
+                  <ul>
+                    {useCase.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
           </div>
         </section>
 
         {/* FAQ ACCORDION */}
         <section ref={faqRef} className="la-section la-faq-section">
-          <h2>Questions, meet answers.</h2>
+          <h2>{sections.faq.title}</h2>
           <div className="la-faq-list">
-            {faqItems.map((item, index) => (
+            {faq.map((item, index) => (
               <div
                 key={index}
                 className={
@@ -363,11 +318,11 @@ export default function Home() {
                     setOpenFaqIndex(openFaqIndex === index ? null : index)
                   }
                 >
-                  <span>{item.q}</span>
+                  <span>{item.question}</span>
                   <span>{openFaqIndex === index ? "−" : "+"}</span>
                 </button>
                 {openFaqIndex === index && (
-                  <p className="la-faq-answer">{item.a}</p>
+                  <p className="la-faq-answer">{item.answer}</p>
                 )}
               </div>
             ))}
@@ -378,30 +333,26 @@ export default function Home() {
         <footer className="la-footer">
           <div>
             <div className="la-logo">
-              Locks<span>All</span>
+              {siteConfig.brand.primary}
+              <span>{siteConfig.brand.accent}</span>
             </div>
             <p className="la-footer-text">
-              Prototype preview of a unified access platform. Built with
-              Next.js.
+              {footer.summary}
             </p>
           </div>
           <div className="la-footer-right">
             {!submitted ? (
               <>
-                <p className="la-footer-text">
-                  Be the first to know when we launch something real.
-                </p>
+                <p className="la-footer-text">{footer.ctaPrompt}</p>
                 <button
                   className="la-footer-button"
                   onClick={() => handleScrollTo(featuresRef)}
                 >
-                  Explore the vision
+                  {footer.ctaButton}
                 </button>
               </>
             ) : (
-              <p className="la-footer-text">
-                Thanks for being part of the earliest supporters.
-              </p>
+              <p className="la-footer-text">{footer.thankYou}</p>
             )}
           </div>
         </footer>

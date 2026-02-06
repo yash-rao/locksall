@@ -103,10 +103,39 @@
   filter: brightness(1.08);
 }
 
+.la-cta-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.la-cta-helper {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.la-cta-error {
+  margin-top: 0.75rem;
+  color: #fca5a5;
+  font-weight: 500;
+}
+
 .la-cta-thanks {
   margin-top: 1.5rem;
   color: #bbf7d0;
   font-weight: 500;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .la-hero-meta {
@@ -399,12 +428,6 @@
   .la-features-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.la-cta-error {
-  margin-top: 0.6rem;
-  color: #fecaca;
-  font-size: 0.85rem;
 }
 
 /* --- LocksAll abstract security background + layout glue --- */
