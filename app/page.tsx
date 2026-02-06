@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
 import { siteConfig, type UseCaseKey } from "@/app/config";
@@ -59,6 +60,12 @@ function SecurityBackground({ mouse }: { mouse: MouseVector }) {
   );
 }
 
+const Visualizer = dynamic(() => import("@/components/Visualizer"), {
+  ssr: false,
+  loading: () => (
+    <div className="la-visualizer-loading">Initializing Secure Core...</div>
+  ),
+});
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -221,30 +228,33 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="la-hero-card">
-            <div className="la-hero-card-header">
-              <span className="dot red" />
-              <span className="dot yellow" />
-              <span className="dot green" />
-            </div>
-            <div className="la-hero-card-body">
-              <p className="la-hero-card-label">{heroCard.label}</p>
-              <div className="la-hero-events">
-                {heroCard.events.map((event) => (
-                  <div
-                    key={`${event.status}-${event.title}-${event.emphasis}`}
-                    className="la-hero-event"
-                  >
-                    <span className={`pill pill-${event.tone}`}>
-                      {event.status}
-                    </span>
-                    <div>
-                      <strong>{event.title}</strong> {event.action}{" "}
-                      <b>{event.emphasis}</b>
-                      <div className="muted">{event.detail}</div>
+          <div className="la-hero-visual">
+            <Visualizer />
+            <div className="la-hero-card">
+              <div className="la-hero-card-header">
+                <span className="dot red" />
+                <span className="dot yellow" />
+                <span className="dot green" />
+              </div>
+              <div className="la-hero-card-body">
+                <p className="la-hero-card-label">{heroCard.label}</p>
+                <div className="la-hero-events">
+                  {heroCard.events.map((event) => (
+                    <div
+                      key={`${event.status}-${event.title}-${event.emphasis}`}
+                      className="la-hero-event"
+                    >
+                      <span className={`pill pill-${event.tone}`}>
+                        {event.status}
+                      </span>
+                      <div>
+                        <strong>{event.title}</strong> {event.action}{" "}
+                        <b>{event.emphasis}</b>
+                        <div className="muted">{event.detail}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
