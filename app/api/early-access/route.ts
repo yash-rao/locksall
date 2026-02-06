@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
-        { ok: false, message: "Invalid email" },
+        { ok: false, message: invalidPayloadMessage },
         { status: 400 }
       );
     }
@@ -77,6 +77,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
+    if ((err as Error)?.message === "DUPLICATE_EMAIL") {
+      return NextResponse.json(
+        { ok: false, message: duplicateMessage },
+        { status: 409 }
+      );
+    }
     console.error("Error in /api/early-access:", err);
     return NextResponse.json(
       { ok: false, message: "Server error" },
