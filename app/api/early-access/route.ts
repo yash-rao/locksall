@@ -2,10 +2,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 
-import { serverConfig } from "@/app/config";
-
-export const runtime = "nodejs";
-
 type EarlyAccessEntry = {
   email: string;
   createdAt: string;
@@ -13,20 +9,11 @@ type EarlyAccessEntry = {
   ipAddress: string | null;
 };
 
-const {
-  storagePath,
-  emailPattern,
-  duplicateMessage,
-  invalidMessage,
-  invalidPayloadMessage,
-} = serverConfig.earlyAccess;
+const storagePath =
+  process.env.EARLY_ACCESS_STORAGE_PATH ??
+  path.join(process.cwd(), "data", "early-access.json");
 
-let writeQueue: Promise<void> = Promise.resolve();
-
-function enqueueWrite(task: () => Promise<void>) {
-  writeQueue = writeQueue.then(task, task);
-  return writeQueue;
-}
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function readEntries(): Promise<EarlyAccessEntry[]> {
   try {
@@ -42,15 +29,8 @@ async function readEntries(): Promise<EarlyAccessEntry[]> {
 }
 
 async function writeEntries(entries: EarlyAccessEntry[]) {
-  const directory = path.dirname(storagePath);
-  const tempPath = path.join(
-    directory,
-    `.early-access-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`
-  );
-
-  await fs.mkdir(directory, { recursive: true });
-  await fs.writeFile(tempPath, JSON.stringify(entries, null, 2));
-  await fs.rename(tempPath, storagePath);
+  await fs.mkdir(path.dirname(storagePath), { recursive: true });
+  await fs.writeFile(storagePath, JSON.stringify(entries, null, 2));
 }
 
 export async function POST(request: Request) {
@@ -68,36 +48,32 @@ export async function POST(request: Request) {
 
     if (!emailPattern.test(normalizedEmail)) {
       return NextResponse.json(
-        { ok: false, message: invalidMessage },
+        { ok: false, message: "Please enter a valid email address." },
         { status: 400 }
       );
     }
 
-    await enqueueWrite(async () => {
-      const entries = await readEntries();
-      const existing = entries.find(
-        (entry) => entry.email === normalizedEmail
+    const entries = await readEntries();
+    const existing = entries.find((entry) => entry.email === normalizedEmail);
+
+    if (existing) {
+      return NextResponse.json(
+        { ok: false, message: "That email is already on the list." },
+        { status: 409 }
       );
+    }
 
-      if (existing) {
-        throw new Error("DUPLICATE_EMAIL");
-      }
+    const ipAddress = request.headers.get("x-forwarded-for");
+    const userAgent = request.headers.get("user-agent");
 
-      const forwardedFor = request.headers.get("x-forwarded-for");
-      const ipAddress = forwardedFor
-        ? forwardedFor.split(",")[0]?.trim() || null
-        : request.headers.get("x-real-ip");
-      const userAgent = request.headers.get("user-agent");
-
-      entries.push({
-        email: normalizedEmail,
-        createdAt: new Date().toISOString(),
-        ipAddress,
-        userAgent,
-      });
-
-      await writeEntries(entries);
+    entries.push({
+      email: normalizedEmail,
+      createdAt: new Date().toISOString(),
+      ipAddress,
+      userAgent,
     });
+
+    await writeEntries(entries);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

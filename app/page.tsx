@@ -105,7 +105,7 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError(earlyAccess.emptyEmailMessage);
+      setError("Please enter an email address to continue.");
       return;
     }
 
@@ -200,7 +200,7 @@ export default function Home() {
                   id="early-access-helper"
                   className="la-cta-helper"
                 >
-                  {earlyAccess.helperText}
+                  We’ll only use this to share launch updates. No spam.
                 </p>
                 {error && (
                   <p className="la-cta-error" role="alert">
