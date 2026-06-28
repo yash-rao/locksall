@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../account/account.module.css";
 
 type AdminUser = {
@@ -29,6 +29,19 @@ export default function AdminPage() {
   const [auditEvents, setAuditEvents] = useState<Audit[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const metrics = useMemo(() => {
+    const totalCards = users.reduce((sum, user) => sum + user.cards.length, 0);
+    const blockedCards = users.reduce((sum, user) => sum + user.cards.filter((card) => card.status === "BLOCKED").length, 0);
+
+    return [
+      { label: "Users", value: users.length },
+      { label: "Masked cards", value: totalCards },
+      { label: "Blocked cards", value: blockedCards },
+      { label: "Early leads", value: leads.length },
+      { label: "Audit events", value: auditEvents.length },
+    ];
+  }, [users, leads.length, auditEvents.length]);
 
   useEffect(() => {
     async function loadAdmin() {
@@ -83,6 +96,15 @@ export default function AdminPage() {
           <div className={styles.error}>{error}</div>
         ) : (
           <>
+            <section className={styles.metrics} aria-label="Admin summary">
+              {metrics.map((item) => (
+                <article key={item.label}>
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </article>
+              ))}
+            </section>
+
             <div className={styles.grid}>
               <section className={styles.panel}>
                 <div className={styles.panelHead}><h2>Users</h2><span>{users.length} shown</span></div>
