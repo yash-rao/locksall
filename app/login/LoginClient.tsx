@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -182,6 +183,12 @@ export default function LoginClient() {
               </button>
             </div>
           </label>
+
+          {mode === "signin" && (
+            <p className="la-prototype-muted">
+              <Link href="/forgot-password">Forgot password?</Link>
+            </p>
+          )}
 
           {mode === "signup" && (
             <div className={styles.passwordMeter} aria-label="Password strength">
