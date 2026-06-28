@@ -1,0 +1,228 @@
+.authPage {
+  min-height: 100vh;
+}
+
+.authShell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  gap: clamp(1.25rem, 4vw, 4rem);
+  align-items: center;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 3.5rem);
+}
+
+.authStory {
+  max-width: 720px;
+}
+
+.authStory h1 {
+  margin: 1.3rem 0 0;
+  color: #10201c;
+  font-size: clamp(3.2rem, 8vw, 7rem);
+  font-weight: 900;
+  line-height: 0.92;
+}
+
+.authStory p:not(:global(.la-kicker)) {
+  max-width: 560px;
+  color: #4d615d;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.authProof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+
+.authProof span {
+  border: 1px solid rgba(20, 33, 31, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #314541;
+  padding: 0.48rem 0.68rem;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.authCard {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid rgba(20, 33, 31, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 24px 60px rgba(43, 55, 50, 0.14);
+  padding: clamp(1rem, 3vw, 1.35rem);
+  backdrop-filter: blur(18px);
+}
+
+.authCard h2 {
+  margin: 0;
+  color: #14211f;
+  font-size: 1.55rem;
+}
+
+.authSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  border: 1px solid rgba(20, 33, 31, 0.12);
+  border-radius: 8px;
+  background: rgba(238, 242, 233, 0.76);
+  padding: 0.35rem;
+}
+
+.authSwitch button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #4d615d;
+  font-weight: 850;
+}
+
+.authSwitch button.active {
+  background: #12372f;
+  color: #fffaf0;
+  box-shadow: 0 10px 22px rgba(18, 55, 47, 0.16);
+}
+
+.authField {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.authField span {
+  color: #314541;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.authField input,
+.passwordControl input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(20, 33, 31, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #14211f;
+  outline: none;
+  padding: 0.72rem 0.85rem;
+}
+
+.authField input:focus,
+.passwordControl input:focus {
+  border-color: #24745b;
+  box-shadow: 0 0 0 3px rgba(36, 116, 91, 0.14);
+}
+
+.passwordControl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+}
+
+.passwordControl button {
+  min-width: 68px;
+  min-height: 46px;
+  border: 1px solid rgba(20, 33, 31, 0.14);
+  border-radius: 8px;
+  background: #eef2e9;
+  color: #314541;
+  font-weight: 850;
+}
+
+.passwordMeter {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.passwordMeter div {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+.passwordMeter span {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(20, 33, 31, 0.12);
+}
+
+.passwordMeter span.active {
+  background: #24745b;
+}
+
+.passwordMeter p {
+  margin: 0;
+  color: #5b6c67;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.authSubmit {
+  min-height: 48px;
+  border: 1px solid #12372f;
+  border-radius: 8px;
+  background: #12372f;
+  color: #fffaf0;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(18, 55, 47, 0.18);
+}
+
+.authSubmit:hover:not(:disabled) {
+  background: #195143;
+}
+
+.authSubmit:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.authMessage,
+.authError {
+  margin: 0;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.authMessage {
+  background: #dcefe5;
+  color: #176047;
+}
+
+.authError {
+  background: #f3d3cd;
+  color: #9a2c22;
+}
+
+@media (max-width: 860px) {
+  .authShell {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .authStory h1 {
+    font-size: clamp(2.8rem, 14vw, 5rem);
+  }
+}
+
+@media (max-width: 520px) {
+  .authShell {
+    padding: 1rem;
+  }
+
+  .passwordControl {
+    grid-template-columns: 1fr;
+  }
+
+  .passwordControl button {
+    width: 100%;
+  }
+}
