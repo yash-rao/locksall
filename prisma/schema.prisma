@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum CardStatus {
   ACTIVE
   BLOCKED
@@ -16,6 +21,9 @@ model User {
   id                  String               @id @default(cuid())
   name                String?
   email               String               @unique
+  phone               String?
+  address             String?
+  role                UserRole             @default(USER)
   passwordHash        String
   cards               Card[]
   auditEvents         AuditEvent[]
@@ -31,11 +39,11 @@ model Card {
   label     String
   last4     String
   provider  String
+  type      String?
   status    CardStatus @default(ACTIVE)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  @@unique([userId, provider])
   @@index([userId])
 }
 
