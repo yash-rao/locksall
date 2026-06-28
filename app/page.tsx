@@ -6,41 +6,68 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import PrototypePanel from "@/components/PrototypePanel";
 
-type SectionKey = "features" | "useCases" | "faq";
 type MouseVector = { x: number; y: number };
 type UseCaseKey = "lostWallet" | "family" | "business";
+
+const trustStats = [
+  { value: "60 sec", label: "target emergency response" },
+  { value: "0", label: "full card numbers shown" },
+  { value: "24/7", label: "incident-ready workflow" },
+];
 
 const features = [
   {
     title: "Emergency card freeze",
-    body: "Block every linked card from one command when a wallet, phone, or account is at risk.",
-    stat: "1 action",
+    body: "Give users one authenticated place to pause every registered card when a wallet, phone, or account looks compromised.",
+    stat: "Rapid lock",
   },
   {
-    title: "Provider-aware routing",
-    body: "Route requests to each bank or issuer connector while showing clear status for every card.",
-    stat: "Multi-bank",
+    title: "Issuer-aware routing",
+    body: "Prepare each request for the right bank, card network, or issuer connector while showing the result for every card.",
+    stat: "Multi-issuer",
   },
   {
-    title: "Audit timeline",
-    body: "Keep a visible record of requests, provider responses, timing, and recovery actions.",
-    stat: "Live log",
+    title: "Audit-grade timeline",
+    body: "Capture who acted, what changed, provider responses, and timestamps so support, disputes, and reviews have context.",
+    stat: "Traceable",
   },
   {
     title: "Controlled recovery",
-    body: "Unblock cards only after the user confirms the threat has passed or an admin approves the action.",
+    body: "Restore access only after the user confirms the risk is resolved, with a clean path for admin approval in business accounts.",
     stat: "Reversible",
   },
   {
-    title: "Secure prototype access",
-    body: "Credentials protect the dashboard so only approved testers can trigger block and unblock actions.",
-    stat: "Auth gated",
+    title: "Privacy-first card vault",
+    body: "Use masked card references and account-level permissions so sensitive payment details stay out of the interface.",
+    stat: "Masked data",
   },
   {
-    title: "Incident-ready UX",
-    body: "Important controls stay obvious under pressure, with status chips and readable failure states.",
-    stat: "Fast response",
+    title: "Operational risk view",
+    body: "Show finance teams which cards are active, blocked, pending, or need manual follow-up without digging through issuer portals.",
+    stat: "Live status",
   },
+];
+
+const businessPoints = [
+  {
+    title: "For consumers",
+    body: "A calmer way to react when cards are lost, stolen, or exposed during travel, phishing, or device theft.",
+  },
+  {
+    title: "For families",
+    body: "Shared emergency visibility for parents, students, and caregivers without revealing full payment credentials.",
+  },
+  {
+    title: "For teams",
+    body: "A lightweight control layer for employee card incidents, offboarding, misuse concerns, and finance operations reviews.",
+  },
+];
+
+const workflowSteps = [
+  "Verify the user session before any financial control is shown.",
+  "Display masked cards and current issuer status in one place.",
+  "Send block or unblock requests through provider-specific paths.",
+  "Record the event trail for later support, dispute, or compliance needs.",
 ];
 
 const useCases: Record<UseCaseKey, { label: string; title: string; points: string[] }> = {
@@ -80,7 +107,11 @@ const faqItems = [
   },
   {
     q: "Is this connected to real banks yet?",
-    a: "No. The current dashboard uses mocked provider calls so the flow, audit trail, and error handling can be tested safely.",
+    a: "No. The current dashboard uses mocked provider calls so the flow, audit trail, and error handling can be tested safely before live issuer integrations.",
+  },
+  {
+    q: "What makes this finance/security focused?",
+    a: "The product is designed around authentication, masked card data, provider status, incident timelines, and controlled recovery instead of a basic card list.",
   },
   {
     q: "Who is the first version for?",
@@ -100,6 +131,7 @@ function SecurityBackground({ mouse }: { mouse: MouseVector }) {
   return (
     <div className="la-bg" aria-hidden="true">
       <div className="la-bg-grid" />
+      <div className="la-bg-ledger" />
       <div className="la-bg-signal" style={layerStyle}>
         {Array.from({ length: 18 }).map((_, index) => (
           <span key={index} className={`la-bg-cell cell-${index + 1}`} />
@@ -189,7 +221,7 @@ export default function Home() {
             Locks<span>All</span>
           </button>
           <nav className="la-nav-links" aria-label="Primary navigation">
-            <button onClick={() => handleScrollTo(featuresRef)}>Features</button>
+            <button onClick={() => handleScrollTo(featuresRef)}>Platform</button>
             <button onClick={() => handleScrollTo(useCasesRef)}>Use cases</button>
             <button onClick={() => handleScrollTo(faqRef)}>FAQ</button>
             <button className="la-nav-cta" onClick={goToPrototype}>Prototype</button>
@@ -198,24 +230,33 @@ export default function Home() {
 
         <section className="la-hero">
           <div className="la-hero-inner">
-            <p className="la-kicker">Financial access control for emergencies</p>
-            <h1>LocksAll</h1>
+            <p className="la-kicker">Financial security command center</p>
+            <h1>Lock payment risk before it spreads.</h1>
             <p className="la-hero-copy">
-              A single authenticated dashboard to block every linked card, review provider responses,
-              and recover safely when the risk is under control.
+              LocksAll gives people and finance teams one authenticated control point to freeze linked cards,
+              monitor issuer responses, and recover with a complete incident record.
             </p>
 
             <div className="la-hero-actions">
               <button className="la-primary-button" onClick={goToPrototype}>View Prototype</button>
               <button className="la-secondary-button" onClick={() => handleScrollTo(featuresRef)}>
-                See features
+                Explore platform
               </button>
             </div>
 
             <div className="la-hero-meta" aria-label="Prototype highlights">
-              <span>Mock bank connectors</span>
+              <span>Masked card data</span>
               <span>Authenticated controls</span>
-              <span>Live audit trail</span>
+              <span>Audit-ready timeline</span>
+            </div>
+
+            <div className="la-trust-strip" aria-label="LocksAll trust metrics">
+              {trustStats.map((item) => (
+                <div key={item.label}>
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
 
             {!submitted ? (
@@ -223,7 +264,7 @@ export default function Home() {
                 <input
                   type="email"
                   required
-                  placeholder="Email for early access"
+                  placeholder="Work or personal email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -239,8 +280,12 @@ export default function Home() {
 
           <aside className="la-hero-card" aria-label="LocksAll dashboard preview">
             <div className="la-hero-card-header">
-              <span>Emergency control</span>
-              <strong>Live prototype</strong>
+              <span>Incident console</span>
+              <strong>Risk level: Elevated</strong>
+            </div>
+            <div className="la-risk-banner">
+              <span>Compromised wallet reported</span>
+              <strong>Action recommended</strong>
             </div>
             <div className="la-lock-panel">
               <div className="la-lock-dial">
@@ -248,43 +293,52 @@ export default function Home() {
                 <small>linked cards</small>
               </div>
               <div className="la-lock-actions">
-                <button>Block all</button>
-                <button>Unblock all</button>
+                <button>Block all cards</button>
+                <button>Start recovery review</button>
               </div>
             </div>
             <div className="la-hero-events">
               <div className="la-hero-event">
-                <span className="pill pill-green">ACTIVE</span>
+                <span className="pill pill-green">MASKED</span>
                 <div>
-                  <strong>Amex Gold</strong>
-                  <p>Ready for emergency freeze</p>
+                  <strong>Visa ending 1042</strong>
+                  <p>Only safe identifiers visible to the user</p>
                 </div>
               </div>
               <div className="la-hero-event">
                 <span className="pill pill-amber">PENDING</span>
                 <div>
-                  <strong>Provider request</strong>
-                  <p>Simulated connector latency tracked</p>
+                  <strong>Issuer confirmation</strong>
+                  <p>Connector response and latency tracked</p>
                 </div>
               </div>
               <div className="la-hero-event">
                 <span className="pill pill-red">AUDIT</span>
                 <div>
-                  <strong>Timeline saved</strong>
-                  <p>Every action keeps a timestamped record</p>
+                  <strong>Incident record</strong>
+                  <p>Action, actor, and timestamp preserved</p>
                 </div>
               </div>
             </div>
           </aside>
         </section>
 
+        <section className="la-business-band" aria-label="LocksAll business positioning">
+          {businessPoints.map((point) => (
+            <article key={point.title}>
+              <h2>{point.title}</h2>
+              <p>{point.body}</p>
+            </article>
+          ))}
+        </section>
+
         <section id="features" ref={featuresRef} className="la-section">
           <div className="la-section-heading">
-            <p className="la-kicker">Core capabilities</p>
-            <h2>Built for the first stressful minutes.</h2>
+            <p className="la-kicker">Platform capabilities</p>
+            <h2>Designed for the first stressful minutes of a financial incident.</h2>
             <p className="la-section-subtitle">
-              LocksAll focuses on a narrow, high-pressure workflow: act quickly, know what happened,
-              and keep recovery controlled.
+              LocksAll focuses on a narrow, high-pressure workflow: act quickly, protect sensitive card data,
+              understand issuer status, and keep recovery controlled.
             </p>
           </div>
           <div className="la-features-grid">
@@ -298,10 +352,25 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="la-section la-workflow-section">
+          <div className="la-section-heading">
+            <p className="la-kicker">Security workflow</p>
+            <h2>Every action should be verified, visible, and reversible.</h2>
+          </div>
+          <div className="la-workflow-grid">
+            {workflowSteps.map((step, index) => (
+              <article className="la-workflow-card" key={step}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>{step}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="usecases" ref={useCasesRef} className="la-section la-usecase-section">
           <div className="la-section-heading">
             <p className="la-kicker">Use cases</p>
-            <h2>One pattern, several real-world responses.</h2>
+            <h2>One control pattern, several real-world responses.</h2>
           </div>
           <div className="la-tabs" role="tablist" aria-label="LocksAll use cases">
             {(Object.keys(useCases) as UseCaseKey[]).map((key) => (
@@ -329,7 +398,7 @@ export default function Home() {
         <section id="faq" ref={faqRef} className="la-section la-faq-section">
           <div className="la-section-heading">
             <p className="la-kicker">FAQ</p>
-            <h2>Questions, meet answers.</h2>
+            <h2>Clear answers for a trust-first product.</h2>
           </div>
           <div className="la-faq-list">
             {faqItems.map((item, index) => {
@@ -352,7 +421,7 @@ export default function Home() {
         <footer className="la-footer">
           <div>
             <strong>LocksAll</strong>
-            <p className="la-footer-text">Prototype for centralized card lock and recovery workflows.</p>
+            <p className="la-footer-text">Prototype for centralized card lock, incident response, and recovery workflows.</p>
           </div>
           <div className="la-footer-right">
             <button className="la-footer-button" onClick={goToPrototype}>Open prototype</button>
