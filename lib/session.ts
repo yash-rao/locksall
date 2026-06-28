@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/access";
 import { prisma } from "@/lib/db";
 
 type SessionUser = { user?: { id?: string; email?: string | null; role?: string } } | null;
@@ -10,16 +11,6 @@ export function getSessionUserId(session: unknown) {
 
 export function getSessionEmail(session: unknown) {
   return (session as SessionUser)?.user?.email ?? null;
-}
-
-export function isAdminEmail(email?: string | null) {
-  if (!email) return false;
-  const admins = (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  return admins.includes(email.toLowerCase());
 }
 
 export async function requireUser() {
