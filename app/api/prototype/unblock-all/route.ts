@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { addAudit, getState, setCardStatus } from "../../../../lib/prototype/store";
-import { unblockCard } from "../../../../lib/prototype/banks";
+import { authOptions } from "@/lib/auth";
+import { unblockCard } from "@/lib/prototype/banks";
+import { addAudit, getState, setCardStatus } from "@/lib/prototype/store";
 
 export async function POST() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
@@ -19,26 +20,26 @@ export async function POST() {
     });
 
     const { cards } = getState();
-    const results = await Promise.all(cards.map((c) => unblockCard(c)));
+    const results = await Promise.all(cards.map((card) => unblockCard(card)));
 
     let anyFail = false;
 
-    for (const r of results) {
-      if (r.ok) {
-        setCardStatus(r.cardId, "ACTIVE");
+    for (const result of results) {
+      if (result.ok) {
+        setCardStatus(result.cardId, "ACTIVE");
         addAudit({
           type: "CARD_UNBLOCKED",
           source: "WEB",
-          message: `Unblocked ${r.cardId} (${r.provider})`,
-          meta: r,
+          message: `Unblocked ${result.cardId} (${result.provider})`,
+          meta: result,
         });
       } else {
         anyFail = true;
         addAudit({
           type: "REQUEST_FAILED",
           source: "WEB",
-          message: `Failed unblocking ${r.cardId} (${r.provider})`,
-          meta: r,
+          message: `Failed unblocking ${result.cardId} (${result.provider})`,
+          meta: result,
         });
       }
     }
@@ -51,8 +52,8 @@ export async function POST() {
     });
 
     return NextResponse.json({ ok: !anyFail, results });
-  } catch (err) {
-    console.error("UNBLOCK ALL error:", err);
+  } catch (error) {
+    console.error("UNBLOCK ALL error:", error);
     addAudit({
       type: "REQUEST_FAILED",
       source: "WEB",

@@ -8,44 +8,101 @@ import PrototypePanel from "@/components/PrototypePanel";
 
 type SectionKey = "features" | "useCases" | "faq";
 type MouseVector = { x: number; y: number };
+type UseCaseKey = "lostWallet" | "family" | "business";
 
-/** Abstract animated security background */
+const features = [
+  {
+    title: "Emergency card freeze",
+    body: "Block every linked card from one command when a wallet, phone, or account is at risk.",
+    stat: "1 action",
+  },
+  {
+    title: "Provider-aware routing",
+    body: "Route requests to each bank or issuer connector while showing clear status for every card.",
+    stat: "Multi-bank",
+  },
+  {
+    title: "Audit timeline",
+    body: "Keep a visible record of requests, provider responses, timing, and recovery actions.",
+    stat: "Live log",
+  },
+  {
+    title: "Controlled recovery",
+    body: "Unblock cards only after the user confirms the threat has passed or an admin approves the action.",
+    stat: "Reversible",
+  },
+  {
+    title: "Secure prototype access",
+    body: "Credentials protect the dashboard so only approved testers can trigger block and unblock actions.",
+    stat: "Auth gated",
+  },
+  {
+    title: "Incident-ready UX",
+    body: "Important controls stay obvious under pressure, with status chips and readable failure states.",
+    stat: "Fast response",
+  },
+];
+
+const useCases: Record<UseCaseKey, { label: string; title: string; points: string[] }> = {
+  lostWallet: {
+    label: "Lost wallet",
+    title: "Stop exposure before calling every issuer",
+    points: [
+      "Freeze all registered cards in one authenticated action.",
+      "See which providers accepted the request and which need a retry.",
+      "Keep a timeline for support calls, disputes, and follow-up checks.",
+    ],
+  },
+  family: {
+    label: "Family safety",
+    title: "Give households a shared emergency control",
+    points: [
+      "Help a parent, student, or traveler respond quickly when cards go missing.",
+      "Centralize card status without exposing full card numbers.",
+      "Create a clear recovery path once accounts are safe.",
+    ],
+  },
+  business: {
+    label: "Business cards",
+    title: "Reduce operational risk for small teams",
+    points: [
+      "Pause employee cards after device loss, termination, or suspected misuse.",
+      "Show a simple status board for finance or operations leads.",
+      "Capture audit evidence for internal reviews.",
+    ],
+  },
+};
+
+const faqItems = [
+  {
+    q: "What is LocksAll?",
+    a: "LocksAll is a financial safety prototype for blocking and unblocking linked payment cards from one authenticated control panel.",
+  },
+  {
+    q: "Is this connected to real banks yet?",
+    a: "No. The current dashboard uses mocked provider calls so the flow, audit trail, and error handling can be tested safely.",
+  },
+  {
+    q: "Who is the first version for?",
+    a: "The first version is aimed at individuals, families, and small teams that need a faster response when cards may be compromised.",
+  },
+  {
+    q: "What happens after I request access?",
+    a: "Your email is stored for early-access follow-up. Prototype access still requires separate test credentials.",
+  },
+];
+
 function SecurityBackground({ mouse }: { mouse: MouseVector }) {
   const layerStyle = {
-    transform: `translate3d(${mouse.x * 35}px, ${mouse.y * 25}px, 0)`,
+    transform: `translate3d(${mouse.x * 22}px, ${mouse.y * 16}px, 0)`,
   };
 
-  const nodes = [
-    { top: "14%", left: "18%" },
-    { top: "22%", left: "42%" },
-    { top: "16%", left: "72%" },
-    { top: "33%", left: "60%" },
-    { top: "38%", left: "25%" },
-    { top: "48%", left: "45%" },
-    { top: "52%", left: "78%" },
-    { top: "62%", left: "18%" },
-    { top: "66%", left: "55%" },
-    { top: "74%", left: "35%" },
-    { top: "78%", left: "82%" },
-    { top: "86%", left: "58%" },
-  ];
-
   return (
-    <div className="la-bg">
+    <div className="la-bg" aria-hidden="true">
       <div className="la-bg-grid" />
-      <div className="la-bg-orb orb-1" />
-      <div className="la-bg-orb orb-2" />
-      <div className="la-bg-orb orb-3" />
-
-      <div className="la-bg-network" style={layerStyle}>
-        <div className="la-bg-lines line-a" />
-        <div className="la-bg-lines line-b" />
-        <div className="la-bg-lines line-c" />
-
-        {nodes.map((n, i) => (
-          <div key={i} className="la-bg-node2" style={{ top: n.top, left: n.left }}>
-            <span className="la-bg-pulse" />
-          </div>
+      <div className="la-bg-signal" style={layerStyle}>
+        {Array.from({ length: 18 }).map((_, index) => (
+          <span key={index} className={`la-bg-cell cell-${index + 1}`} />
         ))}
       </div>
     </div>
@@ -60,9 +117,8 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeUseCase, setActiveUseCase] = useState<SectionKey>("features");
+  const [activeUseCase, setActiveUseCase] = useState<UseCaseKey>("lostWallet");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
   const [mouse, setMouse] = useState<MouseVector>({ x: 0, y: 0 });
 
   const featuresRef = useRef<HTMLElement | null>(null);
@@ -70,9 +126,7 @@ export default function Home() {
   const faqRef = useRef<HTMLElement | null>(null);
 
   const handleScrollTo = (ref: React.RefObject<HTMLElement | null>) => {
-    if (ref.current) {
-      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -104,8 +158,9 @@ export default function Home() {
 
       setSubmitted(true);
       setEmail("");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -119,104 +174,187 @@ export default function Home() {
     }
   };
 
-  const faqItems = [
-    {
-      q: "What is LocksAll?",
-      a: "LocksAll is a unified security platform concept that connects digital identity with physical and digital access.",
-    },
-    {
-      q: "Is this a live product?",
-      a: "This is an early prototype and concept preview.",
-    },
-    {
-      q: "Who is it for?",
-      a: "Individuals and organizations who want centralized security control.",
-    },
-    {
-      q: "How can I try it?",
-      a: "Login and click Prototype to access the dashboard.",
-    },
-  ];
+  const activeCase = useCases[activeUseCase];
 
   return (
     <main className="la-page" onMouseMove={handleMouseMove}>
       <SecurityBackground mouse={mouse} />
 
       <div className="la-content">
-        {/* NAVBAR */}
         <header className="la-nav">
-          <div className="la-logo">
+          <button className="la-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             Locks<span>All</span>
-          </div>
-          <nav className="la-nav-links">
+          </button>
+          <nav className="la-nav-links" aria-label="Primary navigation">
             <button onClick={() => handleScrollTo(featuresRef)}>Features</button>
             <button onClick={() => handleScrollTo(useCasesRef)}>Use cases</button>
             <button onClick={() => handleScrollTo(faqRef)}>FAQ</button>
-
-            <button onClick={goToPrototype}>Prototype</button>
+            <button className="la-nav-cta" onClick={goToPrototype}>Prototype</button>
           </nav>
         </header>
 
-        {/* HERO */}
         <section className="la-hero">
           <div className="la-hero-inner">
-            <h1>Secure access for financial safety.</h1>
-            <p>
-              Instantly block or unblock all linked cards from one place.
-              Designed for emergency scenarios and fast response.
+            <p className="la-kicker">Financial access control for emergencies</p>
+            <h1>LocksAll</h1>
+            <p className="la-hero-copy">
+              A single authenticated dashboard to block every linked card, review provider responses,
+              and recover safely when the risk is under control.
             </p>
 
-            <div style={{ display: "flex", gap: 12 }}>
-              <button className="la-footer-button" onClick={goToPrototype}>
-                View Prototype
+            <div className="la-hero-actions">
+              <button className="la-primary-button" onClick={goToPrototype}>View Prototype</button>
+              <button className="la-secondary-button" onClick={() => handleScrollTo(featuresRef)}>
+                See features
               </button>
             </div>
 
+            <div className="la-hero-meta" aria-label="Prototype highlights">
+              <span>Mock bank connectors</span>
+              <span>Authenticated controls</span>
+              <span>Live audit trail</span>
+            </div>
+
             {!submitted ? (
-              <>
-                <form className="la-cta-form" onSubmit={handleSubmit}>
-                  <input
-                    type="email"
-                    required
-                    placeholder="Your best email for early access"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Sending..." : "Request Invite"}
-                  </button>
-                </form>
-                {error && <p className="la-cta-error">{error}</p>}
-              </>
+              <form className="la-cta-form" onSubmit={handleSubmit}>
+                <input
+                  type="email"
+                  required
+                  placeholder="Email for early access"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Request invite"}
+                </button>
+              </form>
             ) : (
-              <p className="la-cta-thanks">🎉 Thanks! You’re on the early-access list.</p>
+              <p className="la-cta-thanks">Thanks. You are on the early-access list.</p>
             )}
+            {error && <p className="la-cta-error">{error}</p>}
+          </div>
+
+          <aside className="la-hero-card" aria-label="LocksAll dashboard preview">
+            <div className="la-hero-card-header">
+              <span>Emergency control</span>
+              <strong>Live prototype</strong>
+            </div>
+            <div className="la-lock-panel">
+              <div className="la-lock-dial">
+                <span>3</span>
+                <small>linked cards</small>
+              </div>
+              <div className="la-lock-actions">
+                <button>Block all</button>
+                <button>Unblock all</button>
+              </div>
+            </div>
+            <div className="la-hero-events">
+              <div className="la-hero-event">
+                <span className="pill pill-green">ACTIVE</span>
+                <div>
+                  <strong>Amex Gold</strong>
+                  <p>Ready for emergency freeze</p>
+                </div>
+              </div>
+              <div className="la-hero-event">
+                <span className="pill pill-amber">PENDING</span>
+                <div>
+                  <strong>Provider request</strong>
+                  <p>Simulated connector latency tracked</p>
+                </div>
+              </div>
+              <div className="la-hero-event">
+                <span className="pill pill-red">AUDIT</span>
+                <div>
+                  <strong>Timeline saved</strong>
+                  <p>Every action keeps a timestamped record</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section id="features" ref={featuresRef} className="la-section">
+          <div className="la-section-heading">
+            <p className="la-kicker">Core capabilities</p>
+            <h2>Built for the first stressful minutes.</h2>
+            <p className="la-section-subtitle">
+              LocksAll focuses on a narrow, high-pressure workflow: act quickly, know what happened,
+              and keep recovery controlled.
+            </p>
+          </div>
+          <div className="la-features-grid">
+            {features.map((feature) => (
+              <article className="la-feature-card" key={feature.title}>
+                <span>{feature.stat}</span>
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* FEATURES */}
-        <section id="features" ref={featuresRef} className="la-section">
-          <h2>Why LocksAll?</h2>
-          <p className="la-section-subtitle">A single control plane for access, logs, and automation.</p>
-          {/* your existing features grid... */}
+        <section id="usecases" ref={useCasesRef} className="la-section la-usecase-section">
+          <div className="la-section-heading">
+            <p className="la-kicker">Use cases</p>
+            <h2>One pattern, several real-world responses.</h2>
+          </div>
+          <div className="la-tabs" role="tablist" aria-label="LocksAll use cases">
+            {(Object.keys(useCases) as UseCaseKey[]).map((key) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={activeUseCase === key}
+                className={`la-tab ${activeUseCase === key ? "active" : ""}`}
+                onClick={() => setActiveUseCase(key)}
+              >
+                {useCases[key].label}
+              </button>
+            ))}
+          </div>
+          <div className="la-tab-panel">
+            <h3>{activeCase.title}</h3>
+            <ul>
+              {activeCase.points.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </div>
         </section>
 
-        {/* USE CASES */}
-        <section id="usecases" ref={useCasesRef} className="la-section">
-          <h2>Made for real-world scenarios</h2>
-          {/* your existing tabs... */}
-        </section>
-
-        {/* FAQ */}
         <section id="faq" ref={faqRef} className="la-section la-faq-section">
-          <h2>Questions, meet answers.</h2>
-          {/* your existing faq accordion... */}
+          <div className="la-section-heading">
+            <p className="la-kicker">FAQ</p>
+            <h2>Questions, meet answers.</h2>
+          </div>
+          <div className="la-faq-list">
+            {faqItems.map((item, index) => {
+              const open = openFaqIndex === index;
+              return (
+                <article className={`la-faq-item ${open ? "open" : ""}`} key={item.q}>
+                  <button className="la-faq-question" onClick={() => setOpenFaqIndex(open ? null : index)}>
+                    <span>{item.q}</span>
+                    <strong>{open ? "-" : "+"}</strong>
+                  </button>
+                  {open && <p className="la-faq-answer">{item.a}</p>}
+                </article>
+              );
+            })}
+          </div>
         </section>
 
-        {/* 🔐 Prototype (only renders if authenticated) */}
         <PrototypePanel />
 
-        {/* FOOTER ... keep yours as-is */}
+        <footer className="la-footer">
+          <div>
+            <strong>LocksAll</strong>
+            <p className="la-footer-text">Prototype for centralized card lock and recovery workflows.</p>
+          </div>
+          <div className="la-footer-right">
+            <button className="la-footer-button" onClick={goToPrototype}>Open prototype</button>
+          </div>
+        </footer>
       </div>
     </main>
   );

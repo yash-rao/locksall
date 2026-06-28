@@ -14,7 +14,7 @@ export type AuditEvent = {
   type: string;
   source: "WEB";
   message: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 };
 
 const state = {
@@ -35,14 +35,14 @@ export function getState() {
 }
 
 export function addAudit(event: Omit<AuditEvent, "id" | "ts">) {
-  const e: AuditEvent = { id: uid("evt"), ts: new Date().toISOString(), ...event };
-  state.audit.unshift(e);
+  const auditEvent: AuditEvent = { id: uid("evt"), ts: new Date().toISOString(), ...event };
+  state.audit.unshift(auditEvent);
   state.audit = state.audit.slice(0, 50);
-  return e;
+  return auditEvent;
 }
 
 export function setCardStatus(cardId: string, status: CardStatus) {
-  const c = state.cards.find((x) => x.id === cardId);
-  if (c) c.status = status;
-  return c;
+  const card = state.cards.find((item) => item.id === cardId);
+  if (card) card.status = status;
+  return card;
 }
