@@ -3,10 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getState } from "@/lib/prototype/store";
 
+type SessionWithUserId = { user?: { id?: string } } | null;
+
+function getSessionUserId(session: unknown) {
+  return (session as SessionWithUserId)?.user?.id;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
+  const userId = getSessionUserId(session);
 
-  if (!session) {
+  if (!userId) {
     return NextResponse.json(
       { ok: false, message: "Unauthorized" },
       { status: 401 }
@@ -14,7 +21,7 @@ export async function GET() {
   }
 
   try {
-    const state = getState();
+    const state = await getState(userId);
 
     return NextResponse.json({
       ok: true,

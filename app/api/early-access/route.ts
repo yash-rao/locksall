@@ -1,23 +1,7 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { prisma } from "@/lib/db";
 
-const filePath = path.join(process.cwd(), "data", "early-access.json");
-
-function readEmails(): string[] {
-  try {
-    if (!fs.existsSync(filePath)) return [];
-    const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function writeEmails(emails: string[]) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(emails, null, 2), "utf8");
-}
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
@@ -32,8 +16,6 @@ export async function POST(request: Request) {
 
     const normalized = email.trim().toLowerCase();
 
-    // basic validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalized)) {
       return NextResponse.json(
         { ok: false, message: "Invalid email format" },
@@ -41,17 +23,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const emails = readEmails();
-
-    // avoid duplicates
-    if (!emails.includes(normalized)) {
-      emails.push(normalized);
-      writeEmails(emails);
-    }
+    await prisma.earlyAccessLead.upsert({
+      where: { email: normalized },
+      update: {},
+      create: { email: normalized },
+    });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("Error in /api/early-access:", err);
+  } catch (error) {
+    console.error("Error in /api/early-access:", error);
     return NextResponse.json(
       { ok: false, message: "Server error" },
       { status: 500 }
