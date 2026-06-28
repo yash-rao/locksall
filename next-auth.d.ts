@@ -1,6 +1,6 @@
 import type { DefaultSession } from "next-auth";
 
-type LocksAllRole = "USER" | "ADMIN";
+type LocksAllRole = "USER" | "ADMIN" | "GLOBAL_ADMIN";
 
 declare module "next-auth" {
   interface Session {
