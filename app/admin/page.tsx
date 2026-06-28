@@ -6,13 +6,16 @@ import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import styles from "../account/account.module.css";
 
+type Role = "USER" | "ADMIN" | "GLOBAL_ADMIN";
+
 type AdminUser = {
   id: string;
   name: string | null;
   email: string;
   phone: string | null;
   address: string | null;
-  role: "USER" | "ADMIN";
+  role: Role;
+  lockedGlobalAdmin?: boolean;
   createdAt: string;
   cards: Array<{ id: string; label: string; provider: string; type: string | null; last4: string; status: string }>;
   _count: { cards: number; auditEvents: number };
@@ -21,12 +24,16 @@ type AdminUser = {
 type Lead = { id: string; email: string; createdAt: string };
 type Audit = { id: string; type: string; message: string; createdAt: string; user: { email: string; name: string | null } };
 
+type CurrentAdmin = { id: string; email: string; role: Role; isGlobalAdmin: boolean };
+
 export default function AdminPage() {
   const router = useRouter();
   const { status } = useSession();
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdmin | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [auditEvents, setAuditEvents] = useState<Audit[]>([]);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -43,32 +50,53 @@ export default function AdminPage() {
     ];
   }, [users, leads.length, auditEvents.length]);
 
-  useEffect(() => {
-    async function loadAdmin() {
-      const res = await fetch("/api/admin/overview");
+  async function loadAdmin() {
+    const res = await fetch("/api/admin/overview");
 
-      if (res.status === 401) {
-        router.push("/login?callbackUrl=/admin");
-        return;
-      }
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data?.message || "Admin access required.");
-        setLoading(false);
-        return;
-      }
-
-      setUsers(data.users || []);
-      setLeads(data.leads || []);
-      setAuditEvents(data.auditEvents || []);
-      setLoading(false);
+    if (res.status === 401) {
+      router.push("/login?callbackUrl=/admin");
+      return;
     }
 
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setError(data?.message || "Admin access required.");
+      setLoading(false);
+      return;
+    }
+
+    setCurrentAdmin(data.currentAdmin || null);
+    setUsers(data.users || []);
+    setLeads(data.leads || []);
+    setAuditEvents(data.auditEvents || []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
     if (status === "unauthenticated") router.push("/login?callbackUrl=/admin");
     if (status === "authenticated") loadAdmin();
   }, [status, router]);
+
+  async function changeRole(user: AdminUser, role: Role) {
+    setMessage("");
+    setError("");
+
+    const res = await fetch("/api/admin/users/role", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id, role }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setError(data?.message || "Unable to update role.");
+      return;
+    }
+
+    setUsers((current) => current.map((item) => item.id === user.id ? { ...item, ...data.user } : item));
+    setMessage(`${user.email} is now ${role.replace("_", " ").toLowerCase()}.`);
+  }
 
   if (status === "loading" || loading) {
     return <main className="la-page"><div className={styles.loading}>Loading admin console...</div></main>;
@@ -89,9 +117,10 @@ export default function AdminPage() {
         <div className={styles.hero}>
           <p className="la-kicker">Admin console</p>
           <h1>Website-wide visibility for LocksAll.</h1>
-          <p>View users, masked card records, early-access leads, and recent audit activity from inside the website.</p>
+          <p>View users, masked card records, early-access leads, audit activity, and manage admin access.</p>
         </div>
 
+        {message && <div className={styles.message}>{message}</div>}
         {error ? (
           <div className={styles.error}>{error}</div>
         ) : (
@@ -107,16 +136,26 @@ export default function AdminPage() {
 
             <div className={styles.grid}>
               <section className={styles.panel}>
-                <div className={styles.panelHead}><h2>Users</h2><span>{users.length} shown</span></div>
+                <div className={styles.panelHead}>
+                  <h2>Users</h2>
+                  <span>{currentAdmin?.isGlobalAdmin ? "Global admin controls enabled" : "View only"}</span>
+                </div>
                 <div className={styles.cards}>
                   {users.map((user) => (
                     <article key={user.id} className={styles.cardRow}>
                       <div className={styles.cardBadge} />
                       <div>
                         <strong>{user.name || "Unnamed user"}</strong>
-                        <p>{user.email} · {user.role} · {user._count.cards} cards · {user._count.auditEvents} events</p>
+                        <p>{user.email} · {user.role.replace("_", " ")} · {user._count.cards} cards · {user._count.auditEvents} events</p>
                         {(user.phone || user.address) && <p>{user.phone || "No phone"} · {user.address || "No address"}</p>}
                       </div>
+                      {currentAdmin?.isGlobalAdmin && (
+                        <div className={styles.cardActions}>
+                          {user.role !== "ADMIN" && <button onClick={() => changeRole(user, "ADMIN")}>Make admin</button>}
+                          {user.role !== "GLOBAL_ADMIN" && <button onClick={() => changeRole(user, "GLOBAL_ADMIN")}>Make global</button>}
+                          {user.role !== "USER" && !user.lockedGlobalAdmin && <button onClick={() => changeRole(user, "USER")}>Remove admin</button>}
+                        </div>
+                      )}
                     </article>
                   ))}
                 </div>
