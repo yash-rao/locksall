@@ -1,10 +1,24 @@
+const fallbackGlobalAdmins = ["yashbarot712@gmail.com"];
+
+function readEmailList(value: string | undefined) {
+  return (value || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export function isAdminEmail(email?: string | null) {
   if (!email) return false;
 
-  const admins = (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
+  const admins = readEmailList(process.env.ADMIN_EMAILS);
+  return admins.includes(email.toLowerCase()) || isGlobalAdminEmail(email);
+}
 
-  return admins.includes(email.toLowerCase());
+export function isGlobalAdminEmail(email?: string | null) {
+  if (!email) return false;
+
+  const globalAdmins = readEmailList(process.env.GLOBAL_ADMIN_EMAILS);
+  const allowed = globalAdmins.length > 0 ? globalAdmins : fallbackGlobalAdmins;
+
+  return allowed.includes(email.toLowerCase());
 }
