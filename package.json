@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "node scripts/prisma-generate.mjs",
     "db:push": "prisma db push",
+    "db:deploy": "node scripts/db-push-if-configured.mjs",
     "db:studio": "prisma studio"
   },
   "dependencies": {
