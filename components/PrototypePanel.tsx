@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import styles from "./PrototypePanel.module.css";
 
 type Card = {
   id: string;
@@ -91,8 +92,8 @@ export default function PrototypePanel() {
       <div className="la-prototype-panel">
         <div className="la-prototype-header">
           <div>
-            <span className="la-console-label">Incident posture</span>
-            <strong>{posture}</strong>
+            <span className={styles.consoleLabel}>Incident posture</span>
+            <strong className={styles.posture}>{posture}</strong>
             <p className="la-prototype-muted">
               {riskLabel}. Status refreshes automatically while signed in.
             </p>
@@ -118,7 +119,7 @@ export default function PrototypePanel() {
           </div>
         </div>
 
-        <div className="la-console-stats" aria-label="Prototype status summary">
+        <div className={styles.consoleStats} aria-label="Prototype status summary">
           <div>
             <span>Total cards</span>
             <strong>{cards.length}</strong>
@@ -139,14 +140,14 @@ export default function PrototypePanel() {
 
         <div className="la-prototype-grid">
           <div className="la-prototype-column">
-            <div className="la-column-heading">
+            <div className={styles.columnHeading}>
               <h3>Linked cards</h3>
               <span>Masked references only</span>
             </div>
             <div className="la-prototype-list">
               {cards.map((card) => (
-                <div key={card.id} className="la-card-row">
-                  <div className="la-card-mark" aria-hidden="true" />
+                <div key={card.id} className={`la-card-row ${styles.cardRow}`}>
+                  <div className={styles.cardMark} aria-hidden="true" />
                   <div>
                     <div className="la-card-name">{card.label}</div>
                     <div className="la-prototype-muted">
@@ -162,7 +163,7 @@ export default function PrototypePanel() {
           </div>
 
           <div className="la-prototype-column">
-            <div className="la-column-heading">
+            <div className={styles.columnHeading}>
               <h3>Audit timeline</h3>
               <span>Action history</span>
             </div>
@@ -171,7 +172,7 @@ export default function PrototypePanel() {
                 <div className="la-audit-row la-prototype-muted">No events yet. Run a block or restore action to create the first record.</div>
               ) : (
                 audit.map((event) => (
-                  <div key={event.id} className="la-audit-row">
+                  <div key={event.id} className={`la-audit-row ${styles.auditRow}`}>
                     <time>
                       {new Date(event.ts).toLocaleString()} · {event.type}
                     </time>
@@ -183,106 +184,6 @@ export default function PrototypePanel() {
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        .la-console-label {
-          display: block;
-          margin-bottom: 0.35rem;
-          color: #bd9252;
-          font-size: 0.76rem;
-          font-weight: 900;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-        }
-
-        .la-prototype-header strong {
-          display: block;
-          color: #fff7ea;
-          font-size: clamp(1.8rem, 3.2vw, 3rem);
-          line-height: 1;
-        }
-
-        .la-console-stats {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-        }
-
-        .la-console-stats div {
-          border: 1px solid rgba(248, 241, 230, 0.1);
-          border-radius: 8px;
-          background: rgba(5, 5, 5, 0.32);
-          padding: 0.85rem;
-        }
-
-        .la-console-stats span,
-        .la-column-heading span {
-          display: block;
-          color: #a89f91;
-          font-size: 0.78rem;
-          font-weight: 750;
-        }
-
-        .la-console-stats strong {
-          display: block;
-          margin-top: 0.35rem;
-          color: #fff7ea;
-          font-size: 1.65rem;
-          line-height: 1;
-        }
-
-        .la-column-heading {
-          display: flex;
-          justify-content: space-between;
-          gap: 1rem;
-          align-items: baseline;
-          border-bottom: 1px solid rgba(248, 241, 230, 0.09);
-          padding-bottom: 0.8rem;
-        }
-
-        .la-column-heading h3 {
-          margin: 0;
-          color: #fff7ea;
-        }
-
-        .la-card-row {
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-        }
-
-        .la-card-mark {
-          width: 42px;
-          height: 28px;
-          border-radius: 6px;
-          border: 1px solid rgba(189, 146, 82, 0.38);
-          background: linear-gradient(135deg, rgba(189, 146, 82, 0.24), rgba(248, 241, 230, 0.06));
-          box-shadow: inset 0 -10px 18px rgba(5, 5, 5, 0.28);
-        }
-
-        .la-audit-row div {
-          color: #f8f1e6;
-          line-height: 1.45;
-        }
-
-        @media (max-width: 980px) {
-          .la-console-stats {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 680px) {
-          .la-console-stats,
-          .la-card-row {
-            grid-template-columns: 1fr;
-          }
-
-          .la-column-heading {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-        }
-      `}</style>
     </section>
   );
 }
