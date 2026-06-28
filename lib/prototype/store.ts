@@ -7,7 +7,8 @@ export type Card = {
   id: string;
   label: string;
   last4: string;
-  provider: "AMEX_MOCK" | "BOFA_MOCK" | "CAPONE_MOCK";
+  provider: string;
+  type?: string | null;
   status: CardStatus;
 };
 
@@ -21,9 +22,9 @@ export type AuditEvent = {
 };
 
 const defaultCards = [
-  { label: "Amex Gold", last4: "4455", provider: "AMEX_MOCK" },
-  { label: "Bank of America Debit", last4: "7788", provider: "BOFA_MOCK" },
-  { label: "Capital One Quicksilver", last4: "9911", provider: "CAPONE_MOCK" },
+  { label: "Amex Gold", last4: "4455", provider: "AMEX_MOCK", type: "Amex" },
+  { label: "Bank of America Debit", last4: "7788", provider: "BOFA_MOCK", type: "Visa" },
+  { label: "Capital One Quicksilver", last4: "9911", provider: "CAPONE_MOCK", type: "Mastercard" },
 ] as const;
 
 function toCard(card: {
@@ -31,13 +32,15 @@ function toCard(card: {
   label: string;
   last4: string;
   provider: string;
+  type?: string | null;
   status: CardStatus;
 }): Card {
   return {
     id: card.id,
     label: card.label,
     last4: card.last4,
-    provider: card.provider as Card["provider"],
+    provider: card.provider,
+    type: card.type,
     status: card.status,
   };
 }
@@ -52,6 +55,7 @@ async function ensureDefaultCards(userId: string) {
       label: card.label,
       last4: card.last4,
       provider: card.provider,
+      type: card.type,
     })),
     skipDuplicates: true,
   });
