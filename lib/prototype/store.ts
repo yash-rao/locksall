@@ -54,6 +54,7 @@ async function ensureDefaultCards(userId: string) {
       provider: card.provider,
       status: "ACTIVE" as CardStatus,
     })),
+    skipDuplicates: true,
   });
 }
 
