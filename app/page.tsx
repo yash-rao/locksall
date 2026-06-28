@@ -88,7 +88,7 @@ const faqItems = [
   },
   {
     q: "What happens after I request access?",
-    a: "Your email is stored for early-access follow-up. Prototype access still requires separate test credentials.",
+    a: "Your email is stored for early-access follow-up. If email is configured, you will receive an acknowledgement message.",
   },
 ];
 
@@ -115,6 +115,7 @@ export default function Home() {
 
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [earlyAccessMessage, setEarlyAccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeUseCase, setActiveUseCase] = useState<UseCaseKey>("lostWallet");
@@ -144,6 +145,7 @@ export default function Home() {
     try {
       setIsSubmitting(true);
       setError(null);
+      setEarlyAccessMessage("");
 
       const res = await fetch("/api/early-access", {
         method: "POST",
@@ -151,12 +153,13 @@ export default function Home() {
         body: JSON.stringify({ email }),
       });
 
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         throw new Error(data?.message || "Failed to subscribe");
       }
 
       setSubmitted(true);
+      setEarlyAccessMessage(data?.message || "Thanks. You are on the early-access list.");
       setEmail("");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
@@ -229,7 +232,7 @@ export default function Home() {
                 </button>
               </form>
             ) : (
-              <p className="la-cta-thanks">Thanks. You are on the early-access list.</p>
+              <p className="la-cta-thanks">{earlyAccessMessage}</p>
             )}
             {error && <p className="la-cta-error">{error}</p>}
           </div>
