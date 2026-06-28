@@ -1,7 +1,7 @@
-import type { Prisma } from "@prisma/client";
+import type { CardStatus as PrismaCardStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
-export type CardStatus = "ACTIVE" | "BLOCKED";
+export type CardStatus = PrismaCardStatus;
 
 export type Card = {
   id: string;
@@ -52,7 +52,6 @@ async function ensureDefaultCards(userId: string) {
       label: card.label,
       last4: card.last4,
       provider: card.provider,
-      status: "ACTIVE" as CardStatus,
     })),
     skipDuplicates: true,
   });
