@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import styles from "./LoginClient.module.css";
 
 type AuthMode = "signin" | "signup";
 
@@ -87,13 +88,13 @@ export default function LoginClient() {
   }
 
   return (
-    <main className="la-page la-auth-page">
+    <main className={`la-page ${styles.authPage}`}>
       <div className="la-bg" aria-hidden="true">
         <div className="la-bg-grid" />
       </div>
 
-      <section className="la-auth-shell">
-        <div className="la-auth-story">
+      <section className={styles.authShell}>
+        <div className={styles.authStory}>
           <button className="la-logo" onClick={() => router.push("/")}>Locks<span>All</span></button>
           <p className="la-kicker">Secure account access</p>
           <h1>{mode === "signin" ? "Welcome back." : "Create your command center."}</h1>
@@ -101,20 +102,20 @@ export default function LoginClient() {
             Sign in to open the emergency card-control prototype, review linked-card status,
             and keep a timestamped audit trail of every action.
           </p>
-          <div className="la-auth-proof">
+          <div className={styles.authProof}>
             <span>Database accounts</span>
             <span>Hashed passwords</span>
             <span>Protected prototype routes</span>
           </div>
         </div>
 
-        <form className="la-auth-card" onSubmit={onSubmit}>
-          <div className="la-auth-switch" role="tablist" aria-label="Authentication mode">
+        <form className={styles.authCard} onSubmit={onSubmit}>
+          <div className={styles.authSwitch} role="tablist" aria-label="Authentication mode">
             <button
               type="button"
               role="tab"
               aria-selected={mode === "signin"}
-              className={mode === "signin" ? "active" : ""}
+              className={mode === "signin" ? styles.active : ""}
               onClick={() => resetStatus("signin")}
             >
               Sign in
@@ -123,7 +124,7 @@ export default function LoginClient() {
               type="button"
               role="tab"
               aria-selected={mode === "signup"}
-              className={mode === "signup" ? "active" : ""}
+              className={mode === "signup" ? styles.active : ""}
               onClick={() => resetStatus("signup")}
             >
               Sign up
@@ -140,7 +141,7 @@ export default function LoginClient() {
           </div>
 
           {mode === "signup" && (
-            <label className="la-auth-field">
+            <label className={styles.authField}>
               <span>Name</span>
               <input
                 type="text"
@@ -152,7 +153,7 @@ export default function LoginClient() {
             </label>
           )}
 
-          <label className="la-auth-field">
+          <label className={styles.authField}>
             <span>Email</span>
             <input
               type="email"
@@ -164,9 +165,9 @@ export default function LoginClient() {
             />
           </label>
 
-          <label className="la-auth-field">
+          <label className={styles.authField}>
             <span>Password</span>
-            <div className="la-password-control">
+            <div className={styles.passwordControl}>
               <input
                 type={showPassword ? "text" : "password"}
                 required
@@ -183,24 +184,24 @@ export default function LoginClient() {
           </label>
 
           {mode === "signup" && (
-            <div className="la-password-meter" aria-label="Password strength">
+            <div className={styles.passwordMeter} aria-label="Password strength">
               <div>
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <span key={index} className={index < passwordScore ? "active" : ""} />
+                  <span key={index} className={index < passwordScore ? styles.active : ""} />
                 ))}
               </div>
               <p>{passwordLabel}. Use 8+ characters with a number for a stronger account.</p>
             </div>
           )}
 
-          <button className="la-auth-submit" disabled={loading} type="submit">
+          <button className={styles.authSubmit} disabled={loading} type="submit">
             {loading
               ? mode === "signin" ? "Signing in..." : "Creating account..."
               : mode === "signin" ? "Sign in" : "Create account"}
           </button>
 
-          {message && <p className="la-auth-message">{message}</p>}
-          {err && <p className="la-auth-error">{err}</p>}
+          {message && <p className={styles.authMessage}>{message}</p>}
+          {err && <p className={styles.authError}>{err}</p>}
         </form>
       </section>
     </main>
