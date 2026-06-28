@@ -30,6 +30,8 @@ export default function PrototypePanel() {
   const authed = status === "authenticated";
   const blockedCount = cards.filter((card) => card.status === "BLOCKED").length;
   const activeCount = cards.length - blockedCount;
+  const posture = blockedCount === cards.length && cards.length > 0 ? "Contained" : blockedCount > 0 ? "Mixed" : "Exposed";
+  const riskLabel = posture === "Contained" ? "Low residual risk" : posture === "Mixed" ? "Review required" : "Ready for action";
 
   async function refresh() {
     const res = await fetch("/api/prototype/state");
@@ -78,19 +80,21 @@ export default function PrototypePanel() {
   return (
     <section id="prototype" className="la-section">
       <div className="la-section-heading">
-        <p className="la-kicker">Authenticated prototype</p>
-        <h2>Emergency card control dashboard.</h2>
+        <p className="la-kicker">Authenticated command center</p>
+        <h2>Control card exposure from one secure screen.</h2>
         <p className="la-section-subtitle">
-          Block or unblock every linked card, then verify each mocked provider response in the audit timeline.
+          Block or unblock linked cards, monitor simulated issuer responses, and keep a timestamped record
+          for recovery, support, and finance review.
         </p>
       </div>
 
       <div className="la-prototype-panel">
         <div className="la-prototype-header">
           <div>
-            <strong>{cards.length} linked cards</strong>
+            <span className="la-console-label">Incident posture</span>
+            <strong>{posture}</strong>
             <p className="la-prototype-muted">
-              {activeCount} active, {blockedCount} blocked. Status refreshes automatically while signed in.
+              {riskLabel}. Status refreshes automatically while signed in.
             </p>
           </div>
           <div className="la-prototype-actions">
@@ -99,14 +103,14 @@ export default function PrototypePanel() {
               disabled={loadingAction !== null}
               onClick={() => act("block")}
             >
-              {loadingAction === "block" ? "Blocking..." : "Block all"}
+              {loadingAction === "block" ? "Blocking..." : "Block all cards"}
             </button>
             <button
               className="la-success-button"
               disabled={loadingAction !== null}
               onClick={() => act("unblock")}
             >
-              {loadingAction === "unblock" ? "Unblocking..." : "Unblock all"}
+              {loadingAction === "unblock" ? "Restoring..." : "Restore access"}
             </button>
             <button className="la-footer-button" onClick={() => signOut({ callbackUrl: "/" })}>
               Logout
@@ -114,12 +118,35 @@ export default function PrototypePanel() {
           </div>
         </div>
 
+        <div className="la-console-stats" aria-label="Prototype status summary">
+          <div>
+            <span>Total cards</span>
+            <strong>{cards.length}</strong>
+          </div>
+          <div>
+            <span>Active</span>
+            <strong>{activeCount}</strong>
+          </div>
+          <div>
+            <span>Blocked</span>
+            <strong>{blockedCount}</strong>
+          </div>
+          <div>
+            <span>Audit events</span>
+            <strong>{audit.length}</strong>
+          </div>
+        </div>
+
         <div className="la-prototype-grid">
           <div className="la-prototype-column">
-            <h3>Linked cards</h3>
+            <div className="la-column-heading">
+              <h3>Linked cards</h3>
+              <span>Masked references only</span>
+            </div>
             <div className="la-prototype-list">
               {cards.map((card) => (
                 <div key={card.id} className="la-card-row">
+                  <div className="la-card-mark" aria-hidden="true" />
                   <div>
                     <div className="la-card-name">{card.label}</div>
                     <div className="la-prototype-muted">
@@ -135,10 +162,13 @@ export default function PrototypePanel() {
           </div>
 
           <div className="la-prototype-column">
-            <h3>Audit timeline</h3>
+            <div className="la-column-heading">
+              <h3>Audit timeline</h3>
+              <span>Action history</span>
+            </div>
             <div className="la-prototype-list la-audit-list">
               {audit.length === 0 ? (
-                <div className="la-audit-row la-prototype-muted">No events yet.</div>
+                <div className="la-audit-row la-prototype-muted">No events yet. Run a block or restore action to create the first record.</div>
               ) : (
                 audit.map((event) => (
                   <div key={event.id} className="la-audit-row">
