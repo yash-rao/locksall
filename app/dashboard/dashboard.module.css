@@ -1,0 +1,277 @@
+.shell {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1rem, 4vw, 3.25rem);
+}
+
+.loading {
+  position: relative;
+  z-index: 1;
+  padding: 3rem;
+  color: #f8f1e6;
+}
+
+.header,
+.header nav,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.header {
+  justify-content: space-between;
+  margin-bottom: 3rem;
+}
+
+.header a,
+.header button,
+.panelHead a {
+  border: 1px solid rgba(248, 241, 230, 0.14);
+  border-radius: 8px;
+  background: rgba(248, 241, 230, 0.07);
+  color: #f8f1e6;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.hero h1 {
+  margin: 0;
+  color: #fff7ea;
+  font-size: clamp(2.8rem, 7vw, 6.4rem);
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.hero p:not(:first-child),
+.actionBand p,
+.cardRow p,
+.auditRow p,
+.auditRow time,
+.empty {
+  color: #a89f91;
+  line-height: 1.55;
+}
+
+.posture,
+.metrics article,
+.actionBand,
+.panel {
+  border: 1px solid rgba(248, 241, 230, 0.12);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(248, 241, 230, 0.09), rgba(248, 241, 230, 0.04));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.posture {
+  padding: 1rem;
+}
+
+.posture span,
+.metrics span,
+.panelHead span {
+  display: block;
+  color: #bd9252;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.posture strong {
+  display: block;
+  margin-top: 0.5rem;
+  color: #fff7ea;
+  font-size: 2rem;
+}
+
+.safe {
+  border-color: rgba(117, 214, 161, 0.28);
+}
+
+.warning {
+  border-color: rgba(243, 196, 111, 0.28);
+}
+
+.active {
+  border-color: rgba(189, 146, 82, 0.28);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.metrics article {
+  padding: 1rem;
+}
+
+.metrics strong {
+  display: block;
+  color: #fff7ea;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  line-height: 1;
+}
+
+.metrics span {
+  margin-top: 0.45rem;
+}
+
+.actionBand {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.actionBand h2,
+.panelHead h2 {
+  margin: 0;
+  color: #fff7ea;
+}
+
+.danger,
+.success {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: #fff7ea;
+  padding: 0.65rem 0.9rem;
+  font-weight: 900;
+}
+
+.danger {
+  background: #9a2c22;
+}
+
+.success {
+  background: #176047;
+}
+
+.danger:disabled,
+.success:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 1rem;
+}
+
+.panel {
+  padding: 1rem;
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cardRow,
+.auditRow,
+.empty {
+  border: 1px solid rgba(248, 241, 230, 0.1);
+  border-radius: 8px;
+  background: rgba(5, 5, 5, 0.34);
+  padding: 0.85rem;
+}
+
+.cardRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.cardRow strong,
+.auditRow strong {
+  color: #fff7ea;
+}
+
+.cardRow p,
+.auditRow p {
+  margin: 0.2rem 0 0;
+}
+
+.cardBadge {
+  width: 48px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(189, 146, 82, 0.38);
+  background: linear-gradient(135deg, rgba(189, 146, 82, 0.24), rgba(248, 241, 230, 0.06));
+}
+
+.auditRow time {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.error {
+  border: 1px solid rgba(255, 140, 121, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 140, 121, 0.13);
+  color: #ff8c79;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+  .hero,
+  .grid,
+  .actionBand {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionBand {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 680px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics,
+  .cardRow {
+    grid-template-columns: 1fr;
+  }
+
+  .actions,
+  .danger,
+  .success {
+    width: 100%;
+  }
+}
