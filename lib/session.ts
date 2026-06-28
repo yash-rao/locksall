@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/access";
+import { isAdminEmail, isGlobalAdminEmail } from "@/lib/access";
 import { prisma } from "@/lib/db";
 
 type SessionUser = { user?: { id?: string; email?: string | null; role?: string } } | null;
@@ -26,14 +26,25 @@ export async function requireUser() {
 
   if (!user) return null;
 
+  const isGlobalAdmin = user.role === "GLOBAL_ADMIN" || isGlobalAdminEmail(user.email);
+  const isAdmin = isGlobalAdmin || user.role === "ADMIN" || isAdminEmail(user.email);
+
   return {
     ...user,
-    isAdmin: user.role === "ADMIN" || isAdminEmail(user.email),
+    role: isGlobalAdmin ? "GLOBAL_ADMIN" as const : isAdmin ? "ADMIN" as const : "USER" as const,
+    isAdmin,
+    isGlobalAdmin,
   };
 }
 
 export async function requireAdmin() {
   const user = await requireUser();
   if (!user?.isAdmin) return null;
+  return user;
+}
+
+export async function requireGlobalAdmin() {
+  const user = await requireUser();
+  if (!user?.isGlobalAdmin) return null;
   return user;
 }
