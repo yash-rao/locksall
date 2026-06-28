@@ -12,7 +12,7 @@ type User = {
   email: string;
   phone: string | null;
   address: string | null;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "GLOBAL_ADMIN";
   isAdmin?: boolean;
 };
 
