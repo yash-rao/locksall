@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { isAdminEmail } from "@/lib/access";
+import { isAdminEmail, isGlobalAdminEmail } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 
@@ -25,7 +25,11 @@ export const authOptions: NextAuthOptions = {
         const validPassword = verifyPassword(password, user.passwordHash);
         if (!validPassword) return null;
 
-        const role = user.role === "ADMIN" || isAdminEmail(user.email) ? "ADMIN" : "USER";
+        const role = user.role === "GLOBAL_ADMIN" || isGlobalAdminEmail(user.email)
+          ? "GLOBAL_ADMIN"
+          : user.role === "ADMIN" || isAdminEmail(user.email)
+            ? "ADMIN"
+            : "USER";
 
         return { id: user.id, name: user.name, email: user.email, role };
       },
@@ -44,7 +48,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id;
-        session.user.role = token.role === "ADMIN" ? "ADMIN" : "USER";
+        session.user.role = token.role === "GLOBAL_ADMIN" ? "GLOBAL_ADMIN" : token.role === "ADMIN" ? "ADMIN" : "USER";
       }
       return session;
     },
