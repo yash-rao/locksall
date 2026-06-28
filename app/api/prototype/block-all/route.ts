@@ -4,25 +4,31 @@ import { authOptions } from "@/lib/auth";
 import { blockCard } from "@/lib/prototype/banks";
 import { addAudit, getState, setCardStatus } from "@/lib/prototype/store";
 
+function getSessionUserId(session: Awaited<ReturnType<typeof getServerSession>>) {
+  return (session?.user as { id?: string } | undefined)?.id;
+}
+
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  const userId = getSessionUserId(session);
+
+  if (!userId) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const started = Date.now();
-    addAudit({ type: "BLOCK_ALL_REQUESTED", source: "WEB", message: "User requested BLOCK ALL." });
+    await addAudit(userId, { type: "BLOCK_ALL_REQUESTED", source: "WEB", message: "User requested BLOCK ALL." });
 
-    const { cards } = getState();
+    const { cards } = await getState(userId);
     const results = await Promise.all(cards.map((card) => blockCard(card)));
 
     let anyFail = false;
 
     for (const result of results) {
       if (result.ok) {
-        setCardStatus(result.cardId, "BLOCKED");
-        addAudit({
+        await setCardStatus(userId, result.cardId, "BLOCKED");
+        await addAudit(userId, {
           type: "CARD_BLOCKED",
           source: "WEB",
           message: `Blocked ${result.cardId} (${result.provider})`,
@@ -30,7 +36,7 @@ export async function POST() {
         });
       } else {
         anyFail = true;
-        addAudit({
+        await addAudit(userId, {
           type: "REQUEST_FAILED",
           source: "WEB",
           message: `Failed blocking ${result.cardId} (${result.provider})`,
@@ -39,7 +45,7 @@ export async function POST() {
       }
     }
 
-    addAudit({
+    await addAudit(userId, {
       type: "REQUEST_COMPLETED",
       source: "WEB",
       message: `BLOCK ALL completed in ${Date.now() - started}ms`,
@@ -49,7 +55,7 @@ export async function POST() {
     return NextResponse.json({ ok: !anyFail, results });
   } catch (error) {
     console.error("BLOCK ALL error:", error);
-    addAudit({
+    await addAudit(userId, {
       type: "REQUEST_FAILED",
       source: "WEB",
       message: "Unexpected server error during BLOCK ALL",
