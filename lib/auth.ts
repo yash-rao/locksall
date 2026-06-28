@@ -1,8 +1,8 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { isAdminEmail } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
-import { isAdminEmail } from "@/lib/session";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
