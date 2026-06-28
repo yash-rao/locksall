@@ -88,7 +88,7 @@ export async function addAudit(
       type: event.type,
       source: event.source,
       message: event.message,
-      meta: event.meta === undefined ? undefined : event.meta,
+      meta: event.meta === undefined ? undefined : (event.meta as Prisma.InputJsonValue),
     },
   });
 
