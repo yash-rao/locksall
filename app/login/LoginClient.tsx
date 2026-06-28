@@ -11,7 +11,7 @@ type AuthMode = "signin" | "signup";
 export default function LoginClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") || "/#prototype";
+  const callbackUrl = params.get("callbackUrl") || "/dashboard";
 
   const [mode, setMode] = useState<AuthMode>("signin");
   const [name, setName] = useState("");
@@ -76,7 +76,7 @@ export default function LoginClient() {
           throw new Error(data?.message || "Unable to create account.");
         }
 
-        setMessage("Account created. Taking you to the prototype...");
+        setMessage("Account created. Taking you to your dashboard...");
       }
 
       await completeSignin();
@@ -100,13 +100,13 @@ export default function LoginClient() {
           <p className="la-kicker">Secure account access</p>
           <h1>{mode === "signin" ? "Welcome back." : "Create your command center."}</h1>
           <p className={styles.authCopy}>
-            Sign in to open the emergency card-control prototype, review linked-card status,
+            Sign in to open your LocksAll dashboard, review linked-card status,
             and keep a timestamped audit trail of every action.
           </p>
           <div className={styles.authProof}>
             <span>Database accounts</span>
             <span>Hashed passwords</span>
-            <span>Protected prototype routes</span>
+            <span>Protected dashboard</span>
           </div>
         </div>
 
