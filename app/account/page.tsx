@@ -32,7 +32,16 @@ type CardDraft = {
   last4: string;
 };
 
+type ConfirmDialog = {
+  title: string;
+  body: string;
+  actionLabel: string;
+  tone?: "danger" | "safe";
+  onConfirm: () => Promise<void> | void;
+};
+
 const emptyCard: CardDraft = { label: "", provider: "", type: "", last4: "" };
+const emptyPassword = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 function cardToDraft(card: Card): CardDraft {
   return {
@@ -51,8 +60,10 @@ export default function AccountPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [profile, setProfile] = useState({ name: "", phone: "", address: "" });
   const [newCard, setNewCard] = useState<CardDraft>(emptyCard);
+  const [passwordForm, setPasswordForm] = useState(emptyPassword);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<CardDraft>(emptyCard);
+  const [confirm, setConfirm] = useState<ConfirmDialog | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -116,6 +127,32 @@ export default function AccountPage() {
     setMessage("Profile updated.");
   }
 
+  async function savePassword(event: React.FormEvent) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError("New password and confirmation do not match.");
+      return;
+    }
+
+    const res = await fetch("/api/account/password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(passwordForm),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setError(data?.message || "Unable to update password.");
+      return;
+    }
+
+    setPasswordForm(emptyPassword);
+    setMessage("Password updated.");
+  }
+
   async function addCard(event: React.FormEvent) {
     event.preventDefault();
     setMessage("");
@@ -174,6 +211,27 @@ export default function AccountPage() {
     }
   }
 
+  function confirmCardStatus(card: Card) {
+    const nextStatus = card.status === "BLOCKED" ? "ACTIVE" : "BLOCKED";
+    setConfirm({
+      title: nextStatus === "BLOCKED" ? "Block this card?" : "Restore this card?",
+      body: `${card.label} ending ${card.last4} will be marked ${nextStatus.toLowerCase()}. This will be written to the audit history.`,
+      actionLabel: nextStatus === "BLOCKED" ? "Block card" : "Restore card",
+      tone: nextStatus === "BLOCKED" ? "danger" : "safe",
+      onConfirm: async () => { await updateCard(card, { status: nextStatus }); },
+    });
+  }
+
+  function confirmRemoveCard(card: Card) {
+    setConfirm({
+      title: "Remove this card?",
+      body: `${card.label} ending ${card.last4} will be removed from your LocksAll profile. This cannot be undone.`,
+      actionLabel: "Remove card",
+      tone: "danger",
+      onConfirm: async () => { await removeCard(card.id); },
+    });
+  }
+
   async function removeCard(id: string) {
     setMessage("");
     setError("");
@@ -194,6 +252,12 @@ export default function AccountPage() {
     setMessage("Card removed.");
   }
 
+  async function runConfirmedAction() {
+    if (!confirm) return;
+    await confirm.onConfirm();
+    setConfirm(null);
+  }
+
   if (status === "loading" || loading) {
     return <main className="la-page"><div className={styles.loading}>Loading secure account...</div></main>;
   }
@@ -205,6 +269,7 @@ export default function AccountPage() {
         <header className={styles.header}>
           <Link className="la-logo" href="/">Locks<span>All</span></Link>
           <nav>
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/">Home</Link>
             {user?.isAdmin && <Link href="/admin">Admin</Link>}
             <button onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
@@ -214,7 +279,7 @@ export default function AccountPage() {
         <div className={styles.hero}>
           <p className="la-kicker">Account dashboard</p>
           <h1>Manage your secure card profile.</h1>
-          <p>Update your personal information and maintain the masked cards that LocksAll can protect during an emergency.</p>
+          <p>Update your personal information, password, and the masked cards that LocksAll can protect during an emergency.</p>
         </div>
 
         {(message || error) && <div className={error ? styles.error : styles.message}>{error || message}</div>}
@@ -226,6 +291,14 @@ export default function AccountPage() {
             <label>Phone<input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></label>
             <label>Address<textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} /></label>
             <button className={styles.primary}>Save profile</button>
+          </form>
+
+          <form className={styles.panel} onSubmit={savePassword}>
+            <div className={styles.panelHead}><h2>Account security</h2><span>Change password</span></div>
+            <label>Current password<input required type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} autoComplete="current-password" /></label>
+            <label>New password<input required minLength={8} type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} autoComplete="new-password" /></label>
+            <label>Confirm new password<input required minLength={8} type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} autoComplete="new-password" /></label>
+            <button className={styles.primary}>Update password</button>
           </form>
 
           <form className={styles.panel} onSubmit={addCard}>
@@ -269,8 +342,8 @@ export default function AccountPage() {
                     ) : (
                       <>
                         <button onClick={() => startEditing(card)}>Edit</button>
-                        <button onClick={() => updateCard(card, { status: card.status === "BLOCKED" ? "ACTIVE" : "BLOCKED" })}>{card.status === "BLOCKED" ? "Restore" : "Block"}</button>
-                        <button onClick={() => removeCard(card.id)}>Remove</button>
+                        <button onClick={() => confirmCardStatus(card)}>{card.status === "BLOCKED" ? "Restore" : "Block"}</button>
+                        <button onClick={() => confirmRemoveCard(card)}>Remove</button>
                       </>
                     )}
                   </div>
@@ -280,6 +353,19 @@ export default function AccountPage() {
           </div>
         </section>
       </section>
+
+      {confirm && (
+        <div className={styles.confirmOverlay} role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <div className={styles.confirmDialog}>
+            <h2 id="confirm-title">{confirm.title}</h2>
+            <p>{confirm.body}</p>
+            <div className={styles.confirmActions}>
+              <button className={styles.secondary} onClick={() => setConfirm(null)}>Cancel</button>
+              <button className={confirm.tone === "safe" ? styles.safeAction : styles.dangerAction} onClick={runConfirmedAction}>{confirm.actionLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
