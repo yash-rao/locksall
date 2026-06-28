@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 type Card = {
@@ -25,15 +25,16 @@ export default function PrototypePanel() {
 
   const [cards, setCards] = useState<Card[]>([]);
   const [audit, setAudit] = useState<AuditEvent[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"block" | "unblock" | null>(null);
 
   const authed = status === "authenticated";
+  const blockedCount = cards.filter((card) => card.status === "BLOCKED").length;
+  const activeCount = cards.length - blockedCount;
 
   async function refresh() {
     const res = await fetch("/api/prototype/state");
 
     if (res.status === 401) {
-      // session expired
       setCards([]);
       setAudit([]);
       return;
@@ -47,18 +48,18 @@ export default function PrototypePanel() {
   }
 
   useEffect(() => {
-    // ✅ Only run polling when authenticated
     if (!authed) return;
 
     refresh();
-    const id = setInterval(refresh, 1500);
+    const id = setInterval(refresh, 1800);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
 
-  async function act(path: string) {
+  async function act(action: "block" | "unblock") {
+    const path = action === "block" ? "/api/prototype/block-all" : "/api/prototype/unblock-all";
+
     try {
-      setLoading(true);
+      setLoadingAction(action);
       const res = await fetch(path, { method: "POST" });
 
       if (res.status === 401) {
@@ -68,107 +69,87 @@ export default function PrototypePanel() {
 
       await refresh();
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   }
 
-  // ✅ SAFE: return null AFTER hooks exist
   if (!authed) return null;
 
   return (
     <section id="prototype" className="la-section">
-      <h2>Prototype Dashboard</h2>
-      <p className="la-section-subtitle">
-        Authenticated actions only: block/unblock all linked cards with audit logs.
-      </p>
-
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-        <button
-          className="la-footer-button"
-          disabled={loading}
-          onClick={() => act("/api/prototype/block-all")}
-        >
-          {loading ? "Working..." : "BLOCK ALL"}
-        </button>
-
-        <button
-          className="la-footer-button"
-          disabled={loading}
-          onClick={() => act("/api/prototype/unblock-all")}
-        >
-          {loading ? "Working..." : "UNBLOCK ALL"}
-        </button>
-
-        <button
-          className="la-footer-button"
-          onClick={() => signOut({ callbackUrl: "/" })}
-        >
-          Logout
-        </button>
+      <div className="la-section-heading">
+        <p className="la-kicker">Authenticated prototype</p>
+        <h2>Emergency card control dashboard.</h2>
+        <p className="la-section-subtitle">
+          Block or unblock every linked card, then verify each mocked provider response in the audit timeline.
+        </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div className="la-feature-card">
-          <h3>Linked Cards</h3>
-          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-            {cards.map((c) => (
-              <div
-                key={c.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: 12,
-                  borderRadius: 14,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700 }}>{c.label}</div>
-                  <div style={{ opacity: 0.75, fontSize: 13 }}>
-                    **** {c.last4} · {c.provider}
-                  </div>
-                </div>
-                <span className={c.status === "BLOCKED" ? "pill pill-red" : "pill pill-green"}>
-                  {c.status}
-                </span>
-              </div>
-            ))}
+      <div className="la-prototype-panel">
+        <div className="la-prototype-header">
+          <div>
+            <strong>{cards.length} linked cards</strong>
+            <p className="la-prototype-muted">
+              {activeCount} active, {blockedCount} blocked. Status refreshes automatically while signed in.
+            </p>
+          </div>
+          <div className="la-prototype-actions">
+            <button
+              className="la-danger-button"
+              disabled={loadingAction !== null}
+              onClick={() => act("block")}
+            >
+              {loadingAction === "block" ? "Blocking..." : "Block all"}
+            </button>
+            <button
+              className="la-success-button"
+              disabled={loadingAction !== null}
+              onClick={() => act("unblock")}
+            >
+              {loadingAction === "unblock" ? "Unblocking..." : "Unblock all"}
+            </button>
+            <button className="la-footer-button" onClick={() => signOut({ callbackUrl: "/" })}>
+              Logout
+            </button>
           </div>
         </div>
 
-        <div className="la-feature-card">
-          <h3>Audit Timeline</h3>
-          <div
-            style={{
-              display: "grid",
-              gap: 10,
-              marginTop: 10,
-              maxHeight: 420,
-              overflow: "auto",
-            }}
-          >
-            {audit.length === 0 ? (
-              <div style={{ opacity: 0.75 }}>No events yet.</div>
-            ) : (
-              audit.map((e) => (
-                <div
-                  key={e.id}
-                  style={{
-                    padding: 12,
-                    borderRadius: 14,
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    {new Date(e.ts).toLocaleString()} · {e.type}
+        <div className="la-prototype-grid">
+          <div className="la-prototype-column">
+            <h3>Linked cards</h3>
+            <div className="la-prototype-list">
+              {cards.map((card) => (
+                <div key={card.id} className="la-card-row">
+                  <div>
+                    <div className="la-card-name">{card.label}</div>
+                    <div className="la-prototype-muted">
+                      **** {card.last4} · {card.provider.replace("_MOCK", "")}
+                    </div>
                   </div>
-                  <div style={{ marginTop: 6 }}>{e.message}</div>
+                  <span className={card.status === "BLOCKED" ? "pill pill-red" : "pill pill-green"}>
+                    {card.status}
+                  </span>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
+          </div>
+
+          <div className="la-prototype-column">
+            <h3>Audit timeline</h3>
+            <div className="la-prototype-list la-audit-list">
+              {audit.length === 0 ? (
+                <div className="la-audit-row la-prototype-muted">No events yet.</div>
+              ) : (
+                audit.map((event) => (
+                  <div key={event.id} className="la-audit-row">
+                    <time>
+                      {new Date(event.ts).toLocaleString()} · {event.type}
+                    </time>
+                    <div>{event.message}</div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
