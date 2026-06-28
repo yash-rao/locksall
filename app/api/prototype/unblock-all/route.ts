@@ -4,30 +4,36 @@ import { authOptions } from "@/lib/auth";
 import { unblockCard } from "@/lib/prototype/banks";
 import { addAudit, getState, setCardStatus } from "@/lib/prototype/store";
 
+function getSessionUserId(session: Awaited<ReturnType<typeof getServerSession>>) {
+  return (session?.user as { id?: string } | undefined)?.id;
+}
+
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  const userId = getSessionUserId(session);
+
+  if (!userId) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const started = Date.now();
 
-    addAudit({
+    await addAudit(userId, {
       type: "UNBLOCK_ALL_REQUESTED",
       source: "WEB",
       message: "User requested UNBLOCK ALL.",
     });
 
-    const { cards } = getState();
+    const { cards } = await getState(userId);
     const results = await Promise.all(cards.map((card) => unblockCard(card)));
 
     let anyFail = false;
 
     for (const result of results) {
       if (result.ok) {
-        setCardStatus(result.cardId, "ACTIVE");
-        addAudit({
+        await setCardStatus(userId, result.cardId, "ACTIVE");
+        await addAudit(userId, {
           type: "CARD_UNBLOCKED",
           source: "WEB",
           message: `Unblocked ${result.cardId} (${result.provider})`,
@@ -35,7 +41,7 @@ export async function POST() {
         });
       } else {
         anyFail = true;
-        addAudit({
+        await addAudit(userId, {
           type: "REQUEST_FAILED",
           source: "WEB",
           message: `Failed unblocking ${result.cardId} (${result.provider})`,
@@ -44,7 +50,7 @@ export async function POST() {
       }
     }
 
-    addAudit({
+    await addAudit(userId, {
       type: "REQUEST_COMPLETED",
       source: "WEB",
       message: `UNBLOCK ALL completed in ${Date.now() - started}ms`,
@@ -54,7 +60,7 @@ export async function POST() {
     return NextResponse.json({ ok: !anyFail, results });
   } catch (error) {
     console.error("UNBLOCK ALL error:", error);
-    addAudit({
+    await addAudit(userId, {
       type: "REQUEST_FAILED",
       source: "WEB",
       message: "Unexpected server error during UNBLOCK ALL",
