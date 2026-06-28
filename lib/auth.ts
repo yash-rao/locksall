@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
+import { isAdminEmail } from "@/lib/session";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -24,7 +25,9 @@ export const authOptions: NextAuthOptions = {
         const validPassword = verifyPassword(password, user.passwordHash);
         if (!validPassword) return null;
 
-        return { id: user.id, name: user.name, email: user.email };
+        const role = user.role === "ADMIN" || isAdminEmail(user.email) ? "ADMIN" : "USER";
+
+        return { id: user.id, name: user.name, email: user.email, role };
       },
     }),
   ],
@@ -32,12 +35,16 @@ export const authOptions: NextAuthOptions = {
   pages: { signIn: "/login" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id;
+        session.user.role = token.role === "ADMIN" ? "ADMIN" : "USER";
       }
       return session;
     },
