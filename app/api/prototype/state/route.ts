@@ -3,8 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getState } from "@/lib/prototype/store";
 
-function getSessionUserId(session: Awaited<ReturnType<typeof getServerSession>>) {
-  return (session?.user as { id?: string } | undefined)?.id;
+type SessionWithUserId = { user?: { id?: string } } | null;
+
+function getSessionUserId(session: unknown) {
+  return (session as SessionWithUserId)?.user?.id;
 }
 
 export async function GET() {
