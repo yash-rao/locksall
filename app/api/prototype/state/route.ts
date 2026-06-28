@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getState } from "../../../../lib/prototype/store";
+import { authOptions } from "@/lib/auth";
+import { getState } from "@/lib/prototype/store";
 
 export async function GET() {
-  // 🔐 Authentication check
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session) {
     return NextResponse.json(
