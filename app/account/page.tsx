@@ -25,7 +25,23 @@ type Card = {
   status: "ACTIVE" | "BLOCKED";
 };
 
-const emptyCard = { label: "", provider: "", type: "", last4: "" };
+type CardDraft = {
+  label: string;
+  provider: string;
+  type: string;
+  last4: string;
+};
+
+const emptyCard: CardDraft = { label: "", provider: "", type: "", last4: "" };
+
+function cardToDraft(card: Card): CardDraft {
+  return {
+    label: card.label,
+    provider: card.provider,
+    type: card.type || "",
+    last4: card.last4,
+  };
+}
 
 export default function AccountPage() {
   const router = useRouter();
@@ -34,7 +50,9 @@ export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [profile, setProfile] = useState({ name: "", phone: "", address: "" });
-  const [newCard, setNewCard] = useState(emptyCard);
+  const [newCard, setNewCard] = useState<CardDraft>(emptyCard);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [editingCard, setEditingCard] = useState<CardDraft>(emptyCard);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -120,7 +138,7 @@ export default function AccountPage() {
     setMessage("Card added safely with masked details only.");
   }
 
-  async function updateCard(card: Card, changes: Partial<Card>) {
+  async function updateCard(card: Card, changes: Partial<CardDraft & Pick<Card, "status">>) {
     setMessage("");
     setError("");
 
@@ -133,11 +151,27 @@ export default function AccountPage() {
 
     if (!res.ok) {
       setError(data?.message || "Unable to update card.");
-      return;
+      return false;
     }
 
     setCards((current) => current.map((item) => item.id === data.card.id ? data.card : item));
     setMessage("Card updated.");
+    return true;
+  }
+
+  function startEditing(card: Card) {
+    setEditingCardId(card.id);
+    setEditingCard(cardToDraft(card));
+    setMessage("");
+    setError("");
+  }
+
+  async function saveCardEdit(card: Card) {
+    const saved = await updateCard(card, editingCard);
+    if (saved) {
+      setEditingCardId(null);
+      setEditingCard(emptyCard);
+    }
   }
 
   async function removeCard(id: string) {
@@ -183,16 +217,11 @@ export default function AccountPage() {
           <p>Update your personal information and maintain the masked cards that LocksAll can protect during an emergency.</p>
         </div>
 
-        {(message || error) && (
-          <div className={error ? styles.error : styles.message}>{error || message}</div>
-        )}
+        {(message || error) && <div className={error ? styles.error : styles.message}>{error || message}</div>}
 
         <div className={styles.grid}>
           <form className={styles.panel} onSubmit={saveProfile}>
-            <div className={styles.panelHead}>
-              <h2>Personal information</h2>
-              <span>{user?.email}</span>
-            </div>
+            <div className={styles.panelHead}><h2>Personal information</h2><span>{user?.email}</span></div>
             <label>Name<input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} /></label>
             <label>Phone<input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></label>
             <label>Address<textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} /></label>
@@ -200,10 +229,7 @@ export default function AccountPage() {
           </form>
 
           <form className={styles.panel} onSubmit={addCard}>
-            <div className={styles.panelHead}>
-              <h2>Add masked card</h2>
-              <span>No full card numbers</span>
-            </div>
+            <div className={styles.panelHead}><h2>Add masked card</h2><span>No full card numbers</span></div>
             <label>Card name<input required placeholder="Chase Freedom" value={newCard.label} onChange={(e) => setNewCard({ ...newCard, label: e.target.value })} /></label>
             <label>Provider<input required placeholder="Chase" value={newCard.provider} onChange={(e) => setNewCard({ ...newCard, provider: e.target.value })} /></label>
             <label>Type<input placeholder="Visa, Mastercard, Amex" value={newCard.type} onChange={(e) => setNewCard({ ...newCard, type: e.target.value })} /></label>
@@ -213,27 +239,44 @@ export default function AccountPage() {
         </div>
 
         <section className={styles.panel}>
-          <div className={styles.panelHead}>
-            <h2>Your cards</h2>
-            <span>{cards.length} saved</span>
-          </div>
+          <div className={styles.panelHead}><h2>Your cards</h2><span>{cards.length} saved</span></div>
           <div className={styles.cards}>
-            {cards.map((card) => (
-              <article key={card.id} className={styles.cardRow}>
-                <div className={styles.cardBadge} />
-                <div>
-                  <strong>{card.label}</strong>
-                  <p>**** {card.last4} · {card.provider}{card.type ? ` · ${card.type}` : ""}</p>
-                </div>
-                <span className={card.status === "BLOCKED" ? "pill pill-red" : "pill pill-green"}>{card.status}</span>
-                <div className={styles.cardActions}>
-                  <button onClick={() => updateCard(card, { status: card.status === "BLOCKED" ? "ACTIVE" : "BLOCKED" })}>
-                    {card.status === "BLOCKED" ? "Restore" : "Block"}
-                  </button>
-                  <button onClick={() => removeCard(card.id)}>Remove</button>
-                </div>
-              </article>
-            ))}
+            {cards.map((card) => {
+              const editing = editingCardId === card.id;
+              return (
+                <article key={card.id} className={`${styles.cardRow} ${editing ? styles.cardRowEditing : ""}`}>
+                  <div className={styles.cardBadge} />
+                  {editing ? (
+                    <div className={styles.editGrid}>
+                      <label>Card name<input value={editingCard.label} onChange={(e) => setEditingCard({ ...editingCard, label: e.target.value })} /></label>
+                      <label>Provider<input value={editingCard.provider} onChange={(e) => setEditingCard({ ...editingCard, provider: e.target.value })} /></label>
+                      <label>Type<input value={editingCard.type} onChange={(e) => setEditingCard({ ...editingCard, type: e.target.value })} /></label>
+                      <label>Last 4<input inputMode="numeric" maxLength={4} value={editingCard.last4} onChange={(e) => setEditingCard({ ...editingCard, last4: e.target.value.replace(/\D/g, "").slice(0, 4) })} /></label>
+                    </div>
+                  ) : (
+                    <div>
+                      <strong>{card.label}</strong>
+                      <p>**** {card.last4} · {card.provider}{card.type ? ` · ${card.type}` : ""}</p>
+                    </div>
+                  )}
+                  <span className={card.status === "BLOCKED" ? "pill pill-red" : "pill pill-green"}>{card.status}</span>
+                  <div className={styles.cardActions}>
+                    {editing ? (
+                      <>
+                        <button onClick={() => saveCardEdit(card)}>Save</button>
+                        <button onClick={() => setEditingCardId(null)}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => startEditing(card)}>Edit</button>
+                        <button onClick={() => updateCard(card, { status: card.status === "BLOCKED" ? "ACTIVE" : "BLOCKED" })}>{card.status === "BLOCKED" ? "Restore" : "Block"}</button>
+                        <button onClick={() => removeCard(card.id)}>Remove</button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       </section>
