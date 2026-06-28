@@ -98,7 +98,7 @@ export default function LoginClient() {
           <button className="la-logo" onClick={() => router.push("/")}>Locks<span>All</span></button>
           <p className="la-kicker">Secure account access</p>
           <h1>{mode === "signin" ? "Welcome back." : "Create your command center."}</h1>
-          <p>
+          <p className={styles.authCopy}>
             Sign in to open the emergency card-control prototype, review linked-card status,
             and keep a timestamped audit trail of every action.
           </p>
