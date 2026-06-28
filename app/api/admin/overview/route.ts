@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isGlobalAdminEmail } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 
@@ -37,5 +38,22 @@ export async function GET() {
     }),
   ]);
 
-  return NextResponse.json({ ok: true, users, leads, auditEvents });
+  const normalizedUsers = users.map((user) => ({
+    ...user,
+    role: user.role === "GLOBAL_ADMIN" || isGlobalAdminEmail(user.email) ? "GLOBAL_ADMIN" : user.role,
+    lockedGlobalAdmin: isGlobalAdminEmail(user.email),
+  }));
+
+  return NextResponse.json({
+    ok: true,
+    currentAdmin: {
+      id: admin.id,
+      email: admin.email,
+      role: admin.role,
+      isGlobalAdmin: admin.isGlobalAdmin,
+    },
+    users: normalizedUsers,
+    leads,
+    auditEvents,
+  });
 }
