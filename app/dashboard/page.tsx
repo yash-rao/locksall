@@ -38,6 +38,14 @@ type DashboardState = {
   audit: AuditEvent[];
 };
 
+type ConfirmDialog = {
+  title: string;
+  body: string;
+  actionLabel: string;
+  tone: "danger" | "safe";
+  onConfirm: () => Promise<void>;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { status } = useSession();
@@ -45,6 +53,7 @@ export default function DashboardPage() {
   const [state, setState] = useState<DashboardState>({ cards: [], audit: [] });
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<"block" | "unblock" | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmDialog | null>(null);
   const [error, setError] = useState("");
 
   const blockedCount = state.cards.filter((card) => card.status === "BLOCKED").length;
@@ -93,6 +102,18 @@ export default function DashboardPage() {
     if (status === "authenticated") loadDashboard();
   }, [status]);
 
+  function confirmBulkAction(nextAction: "block" | "unblock") {
+    setConfirm({
+      title: nextAction === "block" ? "Block all cards?" : "Restore all cards?",
+      body: nextAction === "block"
+        ? "All saved cards will be marked blocked and the action will be written to the audit timeline."
+        : "All saved cards will be restored to active status and the action will be written to the audit timeline.",
+      actionLabel: nextAction === "block" ? "Block all cards" : "Restore all cards",
+      tone: nextAction === "block" ? "danger" : "safe",
+      onConfirm: async () => { await runAction(nextAction); },
+    });
+  }
+
   async function runAction(nextAction: "block" | "unblock") {
     setAction(nextAction);
     setError("");
@@ -110,6 +131,12 @@ export default function DashboardPage() {
 
     await loadDashboard();
     setAction(null);
+  }
+
+  async function runConfirmedAction() {
+    if (!confirm) return;
+    await confirm.onConfirm();
+    setConfirm(null);
   }
 
   if (status === "loading" || loading) {
@@ -158,10 +185,10 @@ export default function DashboardPage() {
             <p>Use these only when the account or wallet is at risk. Every action is saved in the audit timeline.</p>
           </div>
           <div className={styles.actions}>
-            <button className={styles.danger} disabled={action !== null || state.cards.length === 0} onClick={() => runAction("block")}>
+            <button className={styles.danger} disabled={action !== null || state.cards.length === 0} onClick={() => confirmBulkAction("block")}>
               {action === "block" ? "Blocking..." : "Block all cards"}
             </button>
-            <button className={styles.success} disabled={action !== null || state.cards.length === 0} onClick={() => runAction("unblock")}>
+            <button className={styles.success} disabled={action !== null || state.cards.length === 0} onClick={() => confirmBulkAction("unblock")}>
               {action === "unblock" ? "Restoring..." : "Restore all cards"}
             </button>
           </div>
@@ -206,6 +233,19 @@ export default function DashboardPage() {
           </section>
         </div>
       </section>
+
+      {confirm && (
+        <div className={styles.confirmOverlay} role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <div className={styles.confirmDialog}>
+            <h2 id="confirm-title">{confirm.title}</h2>
+            <p>{confirm.body}</p>
+            <div className={styles.confirmActions}>
+              <button className={styles.secondary} onClick={() => setConfirm(null)}>Cancel</button>
+              <button className={confirm.tone === "safe" ? styles.safeAction : styles.dangerAction} onClick={runConfirmedAction}>{confirm.actionLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
