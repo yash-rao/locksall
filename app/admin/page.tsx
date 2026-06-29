@@ -23,8 +23,18 @@ type AdminUser = {
 
 type Lead = { id: string; email: string; createdAt: string };
 type Audit = { id: string; type: string; message: string; createdAt: string; user: { email: string; name: string | null } };
-
 type CurrentAdmin = { id: string; email: string; role: Role; isGlobalAdmin: boolean };
+type ConfirmDialog = {
+  title: string;
+  body: string;
+  actionLabel: string;
+  tone?: "danger" | "safe";
+  onConfirm: () => Promise<void> | void;
+};
+
+function roleLabel(role: Role) {
+  return role.replace("_", " ").toLowerCase();
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -33,6 +43,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [auditEvents, setAuditEvents] = useState<Audit[]>([]);
+  const [confirm, setConfirm] = useState<ConfirmDialog | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -78,6 +89,20 @@ export default function AdminPage() {
     if (status === "authenticated") loadAdmin();
   }, [status, router]);
 
+  function confirmRoleChange(user: AdminUser, role: Role) {
+    setConfirm({
+      title: role === "USER" ? "Remove admin access?" : `Make ${user.email} ${roleLabel(role)}?`,
+      body: role === "GLOBAL_ADMIN"
+        ? "Global admins can promote, demote, and remove admin access for other users. Only give this to a highly trusted account."
+        : role === "ADMIN"
+          ? "Admins can view website-wide user, card, lead, and audit information."
+          : "This user will lose admin console permissions after the role is changed.",
+      actionLabel: role === "USER" ? "Remove admin" : `Make ${roleLabel(role)}`,
+      tone: role === "USER" ? "danger" : "safe",
+      onConfirm: async () => { await changeRole(user, role); },
+    });
+  }
+
   async function changeRole(user: AdminUser, role: Role) {
     setMessage("");
     setError("");
@@ -95,7 +120,13 @@ export default function AdminPage() {
     }
 
     setUsers((current) => current.map((item) => item.id === user.id ? { ...item, ...data.user } : item));
-    setMessage(`${user.email} is now ${role.replace("_", " ").toLowerCase()}.`);
+    setMessage(`${user.email} is now ${roleLabel(role)}.`);
+  }
+
+  async function runConfirmedAction() {
+    if (!confirm) return;
+    await confirm.onConfirm();
+    setConfirm(null);
   }
 
   if (status === "loading" || loading) {
@@ -109,6 +140,7 @@ export default function AdminPage() {
         <header className={styles.header}>
           <Link className="la-logo" href="/">Locks<span>All</span></Link>
           <nav>
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/account">Account</Link>
             <Link href="/">Home</Link>
           </nav>
@@ -151,9 +183,9 @@ export default function AdminPage() {
                       </div>
                       {currentAdmin?.isGlobalAdmin && (
                         <div className={styles.cardActions}>
-                          {user.role !== "ADMIN" && <button onClick={() => changeRole(user, "ADMIN")}>Make admin</button>}
-                          {user.role !== "GLOBAL_ADMIN" && <button onClick={() => changeRole(user, "GLOBAL_ADMIN")}>Make global</button>}
-                          {user.role !== "USER" && !user.lockedGlobalAdmin && <button onClick={() => changeRole(user, "USER")}>Remove admin</button>}
+                          {user.role !== "ADMIN" && <button onClick={() => confirmRoleChange(user, "ADMIN")}>Make admin</button>}
+                          {user.role !== "GLOBAL_ADMIN" && <button onClick={() => confirmRoleChange(user, "GLOBAL_ADMIN")}>Make global</button>}
+                          {user.role !== "USER" && !user.lockedGlobalAdmin && <button onClick={() => confirmRoleChange(user, "USER")}>Remove admin</button>}
                         </div>
                       )}
                     </article>
@@ -209,6 +241,19 @@ export default function AdminPage() {
           </>
         )}
       </section>
+
+      {confirm && (
+        <div className={styles.confirmOverlay} role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <div className={styles.confirmDialog}>
+            <h2 id="confirm-title">{confirm.title}</h2>
+            <p>{confirm.body}</p>
+            <div className={styles.confirmActions}>
+              <button className={styles.secondary} onClick={() => setConfirm(null)}>Cancel</button>
+              <button className={confirm.tone === "safe" ? styles.safeAction : styles.dangerAction} onClick={runConfirmedAction}>{confirm.actionLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
